@@ -23,29 +23,31 @@
 #include "Pinhole.h"
 #include "KannalaBrandt8.h"
 
+using namespace std;
+
 namespace ORB_SLAM3
 {
 
 Atlas::Atlas(){
-    mpCurrentMap = static_cast<Map*>(NULL);
+    mpCurrentMap = static_cast<Map*>(nullptr);
 }
 
 Atlas::Atlas(int initKFid): mnLastInitKFidMap(initKFid), mHasViewer(false)
 {
-    mpCurrentMap = static_cast<Map*>(NULL);
+    mpCurrentMap = static_cast<Map*>(nullptr);
     CreateNewMap();
 }
 
 Atlas::~Atlas()
 {
-    for(std::set<Map*>::iterator it = mspMaps.begin(), end = mspMaps.end(); it != end;)
+    for(set<Map*>::iterator it = mspMaps.begin(), end = mspMaps.end(); it != end;)
     {
         Map* pMi = *it;
 
         if(pMi)
         {
             delete pMi;
-            pMi = static_cast<Map*>(NULL);
+            pMi = static_cast<Map*>(nullptr);
 
             it = mspMaps.erase(it);
         }
@@ -73,7 +75,7 @@ void Atlas::CreateNewMap()
 
     mpCurrentMap = new Map(mnLastInitKFidMap);
     mpCurrentMap->SetCurrentMap();
-    mspMaps.insert(mpCurrentMap);
+    mspMaps.emplace(mpCurrentMap); //mspMaps.insert(mpCurrentMap);
 }
 
 void Atlas::ChangeMap(Map* pMap)
@@ -120,8 +122,8 @@ GeometricCamera* Atlas::AddCamera(GeometricCamera* pCam)
     for(size_t i=0; i < mvpCameras.size(); ++i)
     {
         GeometricCamera* pCam_i = mvpCameras[i];
-        if(!pCam) std::cout << "Not pCam" << std::endl;
-        if(!pCam_i) std::cout << "Not pCam_i" << std::endl;
+        if(!pCam) cout << "Not pCam" << endl;
+        if(!pCam_i) cout << "Not pCam_i" << endl;
         if(pCam->GetType() != pCam_i->GetType())
             continue;
 
@@ -153,12 +155,12 @@ GeometricCamera* Atlas::AddCamera(GeometricCamera* pCam)
     }
 }
 
-std::vector<GeometricCamera*> Atlas::GetAllCameras()
+vector<GeometricCamera*> Atlas::GetAllCameras()
 {
     return mvpCameras;
 }
 
-void Atlas::SetReferenceMapPoints(const std::vector<MapPoint*> &vpMPs)
+void Atlas::SetReferenceMapPoints(const vector<MapPoint*> &vpMPs)
 {
     unique_lock<mutex> lock(mMutexAtlas);
     mpCurrentMap->SetReferenceMapPoints(vpMPs);
@@ -188,19 +190,19 @@ long unsigned Atlas::KeyFramesInMap()
     return mpCurrentMap->KeyFramesInMap();
 }
 
-std::vector<KeyFrame*> Atlas::GetAllKeyFrames()
+vector<KeyFrame*> Atlas::GetAllKeyFrames()
 {
     unique_lock<mutex> lock(mMutexAtlas);
     return mpCurrentMap->GetAllKeyFrames();
 }
 
-std::vector<MapPoint*> Atlas::GetAllMapPoints()
+vector<MapPoint*> Atlas::GetAllMapPoints()
 {
     unique_lock<mutex> lock(mMutexAtlas);
     return mpCurrentMap->GetAllMapPoints();
 }
 
-std::vector<MapPoint*> Atlas::GetReferenceMapPoints()
+vector<MapPoint*> Atlas::GetReferenceMapPoints()
 {
     unique_lock<mutex> lock(mMutexAtlas);
     return mpCurrentMap->GetReferenceMapPoints();
@@ -236,13 +238,13 @@ void Atlas::clearMap()
 void Atlas::clearAtlas()
 {
     unique_lock<mutex> lock(mMutexAtlas);
-    /*for(std::set<Map*>::iterator it=mspMaps.begin(), send=mspMaps.end(); it!=send; it++)
+    /*for(set<Map*>::iterator it=mspMaps.begin(), send=mspMaps.end(); it!=send; it++)
     {
         (*it)->clear();
         delete *it;
     }*/
     mspMaps.clear();
-    mpCurrentMap = static_cast<Map*>(NULL);
+    mpCurrentMap = static_cast<Map*>(nullptr);
     mnLastInitKFidMap = 0;
 }
 
@@ -270,7 +272,7 @@ void Atlas::RemoveBadMaps()
     /*for(Map* pMap : mspBadMaps)
     {
         delete pMap;
-        pMap = static_cast<Map*>(NULL);
+        pMap = static_cast<Map*>(nullptr);
     }*/
     mspBadMaps.clear();
 }
@@ -313,10 +315,10 @@ void Atlas::PreSave()
             return elem1->GetId() < elem2->GetId();
         }
     };
-    std::copy(mspMaps.begin(), mspMaps.end(), std::back_inserter(mvpBackupMaps));
+    copy(mspMaps.begin(), mspMaps.end(), back_inserter(mvpBackupMaps));
     sort(mvpBackupMaps.begin(), mvpBackupMaps.end(), compFunctor());
 
-    std::set<GeometricCamera*> spCams(mvpCameras.begin(), mvpCameras.end());
+    set<GeometricCamera*> spCams(mvpCameras.begin(), mvpCameras.end());
     for(Map* pMi : mvpBackupMaps)
     {
         if(!pMi || pMi->IsBad())
