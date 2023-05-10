@@ -1,21 +1,3 @@
-/**
-* This file is part of ORB-SLAM3
-*
-* Copyright (C) 2017-2021 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
-* Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
-*
-* ORB-SLAM3 is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
-* License as published by the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* ORB-SLAM3 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
-* the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License along with ORB-SLAM3.
-* If not, see <http://www.gnu.org/licenses/>.
-*/
-
 #include "Atlas.h"
 #include "Viewer.h"
 
@@ -67,9 +49,6 @@ void Atlas::CreateNewMap()
 
         mpCurrentMap->SetStoredMap();
         cout << "Stored map with ID: " << mpCurrentMap->GetId() << endl;
-
-        //if(mHasViewer)
-        //    mpViewer->AddMapToCreateThumbnail(mpCurrentMap);
     }
     cout << "Creation of new map with last KF id: " << mnLastInitKFidMap << endl;
 
@@ -116,7 +95,6 @@ void Atlas::AddMapPoint(MapPoint* pMP)
 
 GeometricCamera* Atlas::AddCamera(GeometricCamera* pCam)
 {
-    //Check if the camera already exists
     bool bAlreadyInMap = false;
     int index_cam = -1;
     for(size_t i=0; i < mvpCameras.size(); ++i)
@@ -238,11 +216,6 @@ void Atlas::clearMap()
 void Atlas::clearAtlas()
 {
     unique_lock<mutex> lock(mMutexAtlas);
-    /*for(set<Map*>::iterator it=mspMaps.begin(), send=mspMaps.end(); it!=send; it++)
-    {
-        (*it)->clear();
-        delete *it;
-    }*/
     mspMaps.clear();
     mpCurrentMap = static_cast<Map*>(nullptr);
     mnLastInitKFidMap = 0;
@@ -269,11 +242,6 @@ void Atlas::SetMapBad(Map* pMap)
 
 void Atlas::RemoveBadMaps()
 {
-    /*for(Map* pMap : mspBadMaps)
-    {
-        delete pMap;
-        pMap = static_cast<Map*>(nullptr);
-    }*/
     mspBadMaps.clear();
 }
 
