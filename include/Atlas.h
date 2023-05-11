@@ -67,8 +67,12 @@ public:
 
     // Method for change components in the current map
     void AddKeyFrame(KeyFrame* pKF);
-    void AddKeyFrame(ORB_SLAM3::KeyFrame* const&)
+    void AddKeyFrame(KeyFrame* const &pKF);
     void AddMapPoint(MapPoint* pMP);
+    void AddMapPoint(MapPoint* const &pKF);
+
+
+    
     //void EraseMapPoint(MapPoint* pMP);
     //void EraseKeyFrame(KeyFrame* pKF);
 
