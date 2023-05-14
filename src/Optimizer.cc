@@ -1,24 +1,4 @@
-/**
-* This file is part of ORB-SLAM3
-*
-* Copyright (C) 2017-2021 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
-* Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
-*
-* ORB-SLAM3 is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
-* License as published by the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* ORB-SLAM3 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
-* the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License along with ORB-SLAM3.
-* If not, see <http://www.gnu.org/licenses/>.
-*/
-
-
 #include "Optimizer.h"
-
 
 #include <complex>
 
@@ -80,8 +60,8 @@ void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<M
         optimizer.setForceStopFlag(pbStopFlag);
 
     long unsigned int maxKFid = 0;
-
-    const int nExpectedSize = (vpKFs.size())*vpMP.size();
+	size_t vpKFs_size=vpKFs.size();
+    const int nExpectedSize = (vpKFs_size)*vpMP.size();
 
     vector<ORB_SLAM3::EdgeSE3ProjectXYZ*> vpEdgesMono;
     vpEdgesMono.reserve(nExpectedSize);
@@ -112,20 +92,21 @@ void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<M
 
 
     // Set KeyFrame vertices
-
-    for(size_t i=0; i<vpKFs.size(); i++)
+    KeyFrame* pKF=vpKFs[0];
+    
+    for(size_t i=0; i<vpKFs_size; i++)
     {
-        KeyFrame* pKF = vpKFs[i];
-        if(pKF->isBad())
-            continue;
-        g2o::VertexSE3Expmap * vSE3 = new g2o::VertexSE3Expmap();
-        Sophus::SE3<float> Tcw = pKF->GetPose();
-        vSE3->setEstimate(g2o::SE3Quat(Tcw.unit_quaternion().cast<double>(),Tcw.translation().cast<double>()));
-        vSE3->setId(pKF->mnId);
-        vSE3->setFixed(pKF->mnId==pMap->GetInitKFid());
-        optimizer.addVertex(vSE3);
-        if(pKF->mnId>maxKFid)
-            maxKFid=pKF->mnId;
+        pKF = vpKFs[i];
+        if(!(pKF->isBad())){
+            g2o::VertexSE3Expmap * vSE3 = new g2o::VertexSE3Expmap();
+            Sophus::SE3<float> Tcw = pKF->GetPose();
+            vSE3->setEstimate(g2o::SE3Quat(Tcw.unit_quaternion().cast<double>(),Tcw.translation().cast<double>()));
+            vSE3->setId(pKF->mnId);
+            vSE3->setFixed(pKF->mnId==pMap->GetInitKFid());
+            optimizer.addVertex(vSE3);
+            if(pKF->mnId>maxKFid)
+                maxKFid=pKF->mnId;
+        }
     }
 
     const float thHuber2D = sqrt(5.99);
@@ -282,7 +263,7 @@ void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<M
 
     // Recover optimized data
     //Keyframes
-    for(size_t i=0; i<vpKFs.size(); i++)
+    for(size_t i=0; i<vpKFs_size; i++)
     {
         KeyFrame* pKF = vpKFs[i];
         if(pKF->isBad())
@@ -415,7 +396,7 @@ void Optimizer::FullInertialBA(Map *pMap, int its, const bool bFixLocal, const l
 
     // Set KeyFrame vertices
     KeyFrame* pIncKF;
-    for(size_t i=0; i<vpKFs.size(); i++)
+    for(size_t i=0; i<vpKFs_size; i++)
     {
         KeyFrame* pKFi = vpKFs[i];
         if(pKFi->mnId>maxKFid)
@@ -472,7 +453,7 @@ void Optimizer::FullInertialBA(Map *pMap, int its, const bool bFixLocal, const l
     }
 
     // IMU links
-    for(size_t i=0;i<vpKFs.size();i++)
+    for(size_t i=0;i<vpKFs_size;i++)
     {
         KeyFrame* pKFi = vpKFs[i];
 
@@ -729,7 +710,7 @@ void Optimizer::FullInertialBA(Map *pMap, int its, const bool bFixLocal, const l
 
     // Recover optimized data
     //Keyframes
-    for(size_t i=0; i<vpKFs.size(); i++)
+    for(size_t i=0; i<vpKFs_size; i++)
     {
         KeyFrame* pKFi = vpKFs[i];
         if(pKFi->mnId>maxKFid)
@@ -1733,7 +1714,7 @@ void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* p
     unique_lock<mutex> lock(pMap->mMutexMapUpdate);
 
     // SE3 Pose Recovering. Sim3:[sR t;0 1] -> SE3:[R t/s;0 1]
-    for(size_t i=0;i<vpKFs.size();i++)
+    for(size_t i=0;i<vpKFs_size;i++)
     {
         KeyFrame* pKFi = vpKFs[i];
 
@@ -3062,7 +3043,7 @@ void Optimizer::InertialOptimization(Map *pMap, Eigen::Matrix3d &Rwg, double &sc
     optimizer.setAlgorithm(solver);
 
     // Set KeyFrame vertices (fixed poses and optimizable velocities)
-    for(size_t i=0; i<vpKFs.size(); i++)
+    for(size_t i=0; i<vpKFs_size; i++)
     {
         KeyFrame* pKFi = vpKFs[i];
         if(pKFi->mnId>maxKFid)
@@ -3126,12 +3107,12 @@ void Optimizer::InertialOptimization(Map *pMap, Eigen::Matrix3d &Rwg, double &sc
     // Graph edges
     // IMU links with gravity and scale
     vector<EdgeInertialGS*> vpei;
-    vpei.reserve(vpKFs.size());
+    vpei.reserve(vpKFs_size);
     vector<pair<KeyFrame*,KeyFrame*> > vppUsedKF;
-    vppUsedKF.reserve(vpKFs.size());
+    vppUsedKF.reserve(vpKFs_size);
     //std::cout << "build optimization graph" << std::endl;
 
-    for(size_t i=0;i<vpKFs.size();i++)
+    for(size_t i=0;i<vpKFs_size;i++)
     {
         KeyFrame* pKFi = vpKFs[i];
 
@@ -3302,9 +3283,9 @@ void Optimizer::InertialOptimization(Map *pMap, Eigen::Vector3d &bg, Eigen::Vect
     vector<EdgeInertialGS*> vpei;
     vpei.reserve(vpKFs.size());
     vector<pair<KeyFrame*,KeyFrame*> > vppUsedKF;
-    vppUsedKF.reserve(vpKFs.size());
+    vppUsedKF.reserve(vpKFs_size);
 
-    for(size_t i=0;i<vpKFs.size();i++)
+    for(size_t i=0;i<vpKFs_size;i++)
     {
         KeyFrame* pKFi = vpKFs[i];
 
@@ -3404,7 +3385,7 @@ void Optimizer::InertialOptimization(Map *pMap, Eigen::Matrix3d &Rwg, double &sc
     optimizer.setAlgorithm(solver);
 
     // Set KeyFrame vertices (all variables are fixed)
-    for(size_t i=0; i<vpKFs.size(); i++)
+    for(size_t i=0; i<vpKFs_size; i++)
     {
         KeyFrame* pKFi = vpKFs[i];
         if(pKFi->mnId>maxKFid)
@@ -3442,7 +3423,7 @@ void Optimizer::InertialOptimization(Map *pMap, Eigen::Matrix3d &Rwg, double &sc
 
     // Graph edges
     int count_edges = 0;
-    for(size_t i=0;i<vpKFs.size();i++)
+    for(size_t i=0;i<vpKFs_size;i++)
     {
         KeyFrame* pKFi = vpKFs[i];
 
@@ -5545,7 +5526,7 @@ void Optimizer::OptimizeEssentialGraph4DoF(Map* pMap, KeyFrame* pLoopKF, KeyFram
     unique_lock<mutex> lock(pMap->mMutexMapUpdate);
 
     // SE3 Pose Recovering. Sim3:[sR t;0 1] -> SE3:[R t/s;0 1]
-    for(size_t i=0;i<vpKFs.size();i++)
+    for(size_t i=0;i<vpKFs_size;i++)
     {
         KeyFrame* pKFi = vpKFs[i];
 
