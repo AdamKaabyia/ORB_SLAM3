@@ -16,6 +16,7 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+
 #include "Atlas.h"
 #include "Viewer.h"
 
@@ -117,7 +118,8 @@ GeometricCamera* Atlas::AddCamera(GeometricCamera* pCam)
     //Check if the camera already exists
     bool bAlreadyInMap = false;
     int index_cam = -1;
-    for(size_t i=0; i < mvpCameras.size(); ++i)
+
+    for(size_t i=0, mvpCameras_size = mvpCameras.size(); i < mvpCameras_size; ++i)
     {
         GeometricCamera* pCam_i = mvpCameras[i];
         if(!pCam) std::cout << "Not pCam" << std::endl;
@@ -236,11 +238,7 @@ void Atlas::clearMap()
 void Atlas::clearAtlas()
 {
     unique_lock<mutex> lock(mMutexAtlas);
-    /*for(std::set<Map*>::iterator it=mspMaps.begin(), send=mspMaps.end(); it!=send; it++)
-    {
-        (*it)->clear();
-        delete *it;
-    }*/
+
     mspMaps.clear();
     mpCurrentMap = static_cast<Map*>(NULL);
     mnLastInitKFidMap = 0;
@@ -267,11 +265,6 @@ void Atlas::SetMapBad(Map* pMap)
 
 void Atlas::RemoveBadMaps()
 {
-    /*for(Map* pMap : mspBadMaps)
-    {
-        delete pMap;
-        pMap = static_cast<Map*>(NULL);
-    }*/
     mspBadMaps.clear();
 }
 
