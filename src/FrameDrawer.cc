@@ -16,6 +16,7 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+
 #include "FrameDrawer.h"
 #include "Tracking.h"
 
@@ -250,7 +251,7 @@ cv::Mat FrameDrawer::DrawRightFrame(float imageScale)
     //Draw
     if(state==Tracking::NOT_INITIALIZED) //INITIALIZING
     {
-        for(unsigned int i=0; i<vMatches.size(); i++)
+        for(unsigned int i=0, vMatches_size=vMatches.size(); i<vMatches_size; i++)
         {
             if(vMatches[i]>=0)
             {
