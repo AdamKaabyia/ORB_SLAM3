@@ -16,6 +16,7 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+
 #include "Converter.h"
 
 namespace ORB_SLAM3
@@ -25,7 +26,8 @@ std::vector<cv::Mat> Converter::toDescriptorVector(const cv::Mat &Descriptors)
 {
     std::vector<cv::Mat> vDesc;
     vDesc.reserve(Descriptors.rows);
-    for (int j=0;j<Descriptors.rows;j++)
+    int Descriptors_rows = Descriptors.rows;
+    for (int j=0;j<Descriptors_rows;j++)
         vDesc.push_back(Descriptors.row(j));
 
     return vDesc;
@@ -65,29 +67,76 @@ cv::Mat Converter::toCvMat(const g2o::Sim3 &Sim3)
 cv::Mat Converter::toCvMat(const Eigen::Matrix<double,4,4> &m)
 {
     cv::Mat cvMat(4,4,CV_32F);
-    for(int i=0;i<4;i++)
-        for(int j=0; j<4; j++)
-            cvMat.at<float>(i,j)=m(i,j);
-
+      
+    cvMat.at<float>(0,0)=m(0,0);
+    cvMat.at<float>(0,1)=m(0,1);
+    cvMat.at<float>(0,2)=m(0,2); 
+    cvMat.at<float>(0,3)=m(0,3);
+    
+    cvMat.at<float>(1,0)=m(1,0);
+    cvMat.at<float>(1,1)=m(1,1);
+    cvMat.at<float>(1,2)=m(1,2); 
+    cvMat.at<float>(1,3)=m(1,3);    
+    
+    cvMat.at<float>(2,0)=m(2,0);
+    cvMat.at<float>(2,1)=m(2,1);
+    cvMat.at<float>(2,2)=m(2,2); 
+    cvMat.at<float>(2,3)=m(2,3);
+    
+    cvMat.at<float>(3,0)=m(3,0);
+    cvMat.at<float>(3,1)=m(3,1);
+    cvMat.at<float>(3,2)=m(3,2); 
+    cvMat.at<float>(3,3)=m(3,3);
+    
     return cvMat.clone();
 }
 
 cv::Mat Converter::toCvMat(const Eigen::Matrix<float,4,4> &m)
 {
     cv::Mat cvMat(4,4,CV_32F);
-    for(int i=0;i<4;i++)
-        for(int j=0; j<4; j++)
-            cvMat.at<float>(i,j)=m(i,j);
-
+      
+    cvMat.at<float>(0,0)=m(0,0);
+    cvMat.at<float>(0,1)=m(0,1);
+    cvMat.at<float>(0,2)=m(0,2); 
+    cvMat.at<float>(0,3)=m(0,3);
+    
+    cvMat.at<float>(1,0)=m(1,0);
+    cvMat.at<float>(1,1)=m(1,1);
+    cvMat.at<float>(1,2)=m(1,2); 
+    cvMat.at<float>(1,3)=m(1,3);    
+    
+    cvMat.at<float>(2,0)=m(2,0);
+    cvMat.at<float>(2,1)=m(2,1);
+    cvMat.at<float>(2,2)=m(2,2); 
+    cvMat.at<float>(2,3)=m(2,3);
+    
+    cvMat.at<float>(3,0)=m(3,0);
+    cvMat.at<float>(3,1)=m(3,1);
+    cvMat.at<float>(3,2)=m(3,2); 
+    cvMat.at<float>(3,3)=m(3,3);
+ 
     return cvMat.clone();
 }
 
 cv::Mat Converter::toCvMat(const Eigen::Matrix<float,3,4> &m)
 {
     cv::Mat cvMat(3,4,CV_32F);
-    for(int i=0;i<3;i++)
-        for(int j=0; j<4; j++)
-            cvMat.at<float>(i,j)=m(i,j);
+      
+    cvMat.at<float>(0,0)=m(0,0);
+    cvMat.at<float>(0,1)=m(0,1);
+    cvMat.at<float>(0,2)=m(0,2); 
+    cvMat.at<float>(0,3)=m(0,3);
+    
+    cvMat.at<float>(1,0)=m(1,0);
+    cvMat.at<float>(1,1)=m(1,1);
+    cvMat.at<float>(1,2)=m(1,2); 
+    cvMat.at<float>(1,3)=m(1,3);    
+    
+    cvMat.at<float>(2,0)=m(2,0);
+    cvMat.at<float>(2,1)=m(2,1);
+    cvMat.at<float>(2,2)=m(2,2); 
+    cvMat.at<float>(2,3)=m(2,3);
+    
 
     return cvMat.clone();
 }
@@ -95,9 +144,22 @@ cv::Mat Converter::toCvMat(const Eigen::Matrix<float,3,4> &m)
 cv::Mat Converter::toCvMat(const Eigen::Matrix3d &m)
 {
     cv::Mat cvMat(3,3,CV_32F);
-    for(int i=0;i<3;i++)
-        for(int j=0; j<3; j++)
-            cvMat.at<float>(i,j)=m(i,j);
+        
+    cvMat.at<float>(0,0)=m(0,0);
+    cvMat.at<float>(0,1)=m(0,1);
+    cvMat.at<float>(0,2)=m(0,2); 
+
+    
+    cvMat.at<float>(1,0)=m(1,0);
+    cvMat.at<float>(1,1)=m(1,1);
+    cvMat.at<float>(1,2)=m(1,2); 
+   
+    cvMat.at<float>(2,0)=m(2,0);
+    cvMat.at<float>(2,1)=m(2,1);
+    cvMat.at<float>(2,2)=m(2,2); 
+
+
+ 
 
     return cvMat.clone();
 }
@@ -105,9 +167,21 @@ cv::Mat Converter::toCvMat(const Eigen::Matrix3d &m)
 cv::Mat Converter::toCvMat(const Eigen::Matrix3f &m)
 {
     cv::Mat cvMat(3,3,CV_32F);
-    for(int i=0;i<3;i++)
-        for(int j=0; j<3; j++)
-            cvMat.at<float>(i,j)=m(i,j);
+    
+    cvMat.at<float>(0,0)=m(0,0);
+    cvMat.at<float>(0,1)=m(0,1);
+    cvMat.at<float>(0,2)=m(0,2); 
+
+    
+    cvMat.at<float>(1,0)=m(1,0);
+    cvMat.at<float>(1,1)=m(1,1);
+    cvMat.at<float>(1,2)=m(1,2); 
+   
+    cvMat.at<float>(2,0)=m(2,0);
+    cvMat.at<float>(2,1)=m(2,1);
+    cvMat.at<float>(2,2)=m(2,2); 
+
+
 
     return cvMat.clone();
 }
@@ -115,9 +189,13 @@ cv::Mat Converter::toCvMat(const Eigen::Matrix3f &m)
 cv::Mat Converter::toCvMat(const Eigen::MatrixXf &m)
 {
     cv::Mat cvMat(m.rows(),m.cols(),CV_32F);
-    for(int i=0;i<m.rows();i++)
-        for(int j=0; j<m.cols(); j++)
+    int m_rows = m.rows();
+    for(int i=0;i<m_rows;i++){
+        int m_cols =m.cols();
+        for(int j=0; j<m_cols; j++){
             cvMat.at<float>(i,j)=m(i,j);
+        }
+    }
 
     return cvMat.clone();
 }
@@ -125,9 +203,13 @@ cv::Mat Converter::toCvMat(const Eigen::MatrixXf &m)
 cv::Mat Converter::toCvMat(const Eigen::MatrixXd &m)
 {
     cv::Mat cvMat(m.rows(),m.cols(),CV_32F);
-    for(int i=0;i<m.rows();i++)
-        for(int j=0; j<m.cols(); j++)
+    int m_rows = m.rows();
+    for(int i=0;i<m_rows;i++){
+        int m_cols =m.cols();
+        for(int j=0; j<m_cols; j++){
             cvMat.at<float>(i,j)=m(i,j);
+        }
+    }
 
     return cvMat.clone();
 }
@@ -135,17 +217,20 @@ cv::Mat Converter::toCvMat(const Eigen::MatrixXd &m)
 cv::Mat Converter::toCvMat(const Eigen::Matrix<double,3,1> &m)
 {
     cv::Mat cvMat(3,1,CV_32F);
-    for(int i=0;i<3;i++)
-            cvMat.at<float>(i)=m(i);
-
+ 
+    cvMat.at<float>(0)=m(0);
+    cvMat.at<float>(1)=m(1);
+    cvMat.at<float>(2)=m(2);
+    
     return cvMat.clone();
 }
 
 cv::Mat Converter::toCvMat(const Eigen::Matrix<float,3,1> &m)
 {
     cv::Mat cvMat(3,1,CV_32F);
-    for(int i=0;i<3;i++)
-        cvMat.at<float>(i)=m(i);
+    cvMat.at<float>(0)=m(0);
+    cvMat.at<float>(1)=m(1);
+    cvMat.at<float>(2)=m(2);
 
     return cvMat.clone();
 }
@@ -153,18 +238,24 @@ cv::Mat Converter::toCvMat(const Eigen::Matrix<float,3,1> &m)
 cv::Mat Converter::toCvSE3(const Eigen::Matrix<double,3,3> &R, const Eigen::Matrix<double,3,1> &t)
 {
     cv::Mat cvMat = cv::Mat::eye(4,4,CV_32F);
-    for(int i=0;i<3;i++)
-    {
-        for(int j=0;j<3;j++)
-        {
-            cvMat.at<float>(i,j)=R(i,j);
-        }
-    }
-    for(int i=0;i<3;i++)
-    {
-        cvMat.at<float>(i,3)=t(i);
-    }
+    
+    cvMat.at<float>(0,0)=R(0,0);
+    cvMat.at<float>(0,1)=R(0,1);
+    cvMat.at<float>(0,2)=R(0,2);
+    
+    cvMat.at<float>(1,0)=R(1,0);
+    cvMat.at<float>(1,1)=R(1,1);
+    cvMat.at<float>(1,2)=R(1,2);
+    
+    cvMat.at<float>(2,0)=R(2,0);
+    cvMat.at<float>(2,1)=R(2,1);
+    cvMat.at<float>(2,2)=R(2,2);
+    
 
+    cvMat.at<float>(0,3)=t(0);
+    cvMat.at<float>(1,3)=t(1);
+    cvMat.at<float>(2,3)=t(2);
+    
     return cvMat.clone();
 }
 
