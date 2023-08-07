@@ -1,57 +1,4 @@
-/**
-* This file is part of ORB-SLAM3
-*
-* Copyright (C) 2017-2021 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
-* Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
-*
-* ORB-SLAM3 is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
-* License as published by the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* ORB-SLAM3 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
-* the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License along with ORB-SLAM3.
-* If not, see <http://www.gnu.org/licenses/>.
-*/
-
-/**
-* Software License Agreement (BSD License)
-*
-*  Copyright (c) 2009, Willow Garage, Inc.
-*  All rights reserved.
-*
-*  Redistribution and use in source and binary forms, with or without
-*  modification, are permitted provided that the following conditions
-*  are met:
-*
-*   * Redistributions of source code must retain the above copyright
-*     notice, this list of conditions and the following disclaimer.
-*   * Redistributions in binary form must reproduce the above
-*     copyright notice, this list of conditions and the following
-*     disclaimer in the documentation and/or other materials provided
-*     with the distribution.
-*   * Neither the name of the Willow Garage nor the names of its
-*     contributors may be used to endorse or promote products derived
-*     from this software without specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-*  POSSIBILITY OF SUCH DAMAGE.
-*
-*/
-
-
+#include <omp.h> 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/features2d/features2d.hpp>
@@ -73,78 +20,65 @@ namespace ORB_SLAM3
     const int EDGE_THRESHOLD = 19;
 
 
-    static float IC_Angle(const Mat& image, Point2f pt,  const vector<int> & u_max)
-    {
-        int m_01 = 0, m_10 = 0;
+static float IC_Angle(const Mat& image, Point2f pt, const vector<int>& u_max) {
+    int m_01 = 0, m_10 = 0;
 
-        const uchar* center = &image.at<uchar> (cvRound(pt.y), cvRound(pt.x));
+    const uchar* center = &image.at<uchar>(cvRound(pt.y), cvRound(pt.x));
 
-        // Treat the center line differently, v=0
-        for (int u = -HALF_PATCH_SIZE; u <= HALF_PATCH_SIZE; ++u)
-            m_10 += u * center[u];
+    // Treat the center line differently, v=0
+    for (int u = -HALF_PATCH_SIZE; u <= HALF_PATCH_SIZE; ++u)
+        m_10 += u * center[u];
 
-        // Go line by line in the circuI853lar patch
-        int step = (int)image.step1();
-        for (int v = 1; v <= HALF_PATCH_SIZE; ++v)
-        {
-            // Proceed over the two lines
-            int v_sum = 0;
-            int d = u_max[v];
-            for (int u = -d; u <= d; ++u)
-            {
-                int val_plus = center[u + v*step], val_minus = center[u - v*step];
-                v_sum += (val_plus - val_minus);
-                m_10 += u * (val_plus + val_minus);
-            }
-            m_01 += v * v_sum;
+    // Go line by line in the circular patch
+    int step = (int)image.step1();
+    for (int v = 1; v <= HALF_PATCH_SIZE; ++v) {
+        // Proceed over the two lines
+        int v_sum = 0;
+        int d = u_max[v];
+        const uchar* center_v_pos = center + v * step;
+        const uchar* center_v_neg = center - v * step;
+        for (int u = -d; u <= d; ++u) {
+            int val_plus = center_v_pos[u];
+            int val_minus = center_v_neg[u];
+            v_sum += (val_plus - val_minus);
+            m_10 += u * (val_plus + val_minus);
         }
-
-        return fastAtan2((float)m_01, (float)m_10);
+        m_01 += v * v_sum;
     }
 
+    return fastAtan2((float)m_01, (float)m_10);
+}
+ 
 
-    const float factorPI = (float)(CV_PI/180.f);
-    static void computeOrbDescriptor(const KeyPoint& kpt,
-                                     const Mat& img, const Point* pattern,
-                                     uchar* desc)
+    
+inline int fast_round(float x) {
+    return static_cast<int>(x + 0.5f);
+}
+
+static void computeOrbDescriptor(const KeyPoint& kpt,
+                                 const Mat& img, const Point* pattern,
+                                 uchar* desc)
+{
+    float angle = kpt.angle * (CV_PI / 180.f);
+    float a = cos(angle), b = sin(angle);
+    const uchar* center = &img.at<uchar>(fast_round(kpt.pt.y), fast_round(kpt.pt.x));
+    const int step = img.step;
+
+    for (int i = 0; i < 32; ++i, pattern += 16)
     {
-        float angle = (float)kpt.angle*factorPI;
-        float a = (float)cos(angle), b = (float)sin(angle);
-
-        const uchar* center = &img.at<uchar>(cvRound(kpt.pt.y), cvRound(kpt.pt.x));
-        const int step = (int)img.step;
-
-#define GET_VALUE(idx) \
-        center[cvRound(pattern[idx].x*b + pattern[idx].y*a)*step + \
-               cvRound(pattern[idx].x*a - pattern[idx].y*b)]
-
-
-        for (int i = 0; i < 32; ++i, pattern += 16)
+        int val = 0;
+        for (int j = 0; j < 16; j += 2)
         {
-            int t0, t1, val;
-            t0 = GET_VALUE(0); t1 = GET_VALUE(1);
-            val = t0 < t1;
-            t0 = GET_VALUE(2); t1 = GET_VALUE(3);
-            val |= (t0 < t1) << 1;
-            t0 = GET_VALUE(4); t1 = GET_VALUE(5);
-            val |= (t0 < t1) << 2;
-            t0 = GET_VALUE(6); t1 = GET_VALUE(7);
-            val |= (t0 < t1) << 3;
-            t0 = GET_VALUE(8); t1 = GET_VALUE(9);
-            val |= (t0 < t1) << 4;
-            t0 = GET_VALUE(10); t1 = GET_VALUE(11);
-            val |= (t0 < t1) << 5;
-            t0 = GET_VALUE(12); t1 = GET_VALUE(13);
-            val |= (t0 < t1) << 6;
-            t0 = GET_VALUE(14); t1 = GET_VALUE(15);
-            val |= (t0 < t1) << 7;
+            int x0 = fast_round(pattern[j].x * b + pattern[j].y * a);
+            int y0 = fast_round(pattern[j].x * a - pattern[j].y * b);
+            int x1 = fast_round(pattern[j + 1].x * b + pattern[j + 1].y * a);
+            int y1 = fast_round(pattern[j + 1].x * a - pattern[j + 1].y * b);
 
-            desc[i] = (uchar)val;
+            val |= (center[x0 * step + y0] < center[x1 * step + y1]) << (j >> 1);
         }
-
-#undef GET_VALUE
+        desc[i] = static_cast<uchar>(val);
     }
-
+}
 
     static int bit_pattern_31_[256*4] =
             {
@@ -468,13 +402,13 @@ namespace ORB_SLAM3
         }
     }
 
-    static void computeOrientation(const Mat& image, vector<KeyPoint>& keypoints, const vector<int>& umax)
-    {
-        for (vector<KeyPoint>::iterator keypoint = keypoints.begin(),
-                     keypointEnd = keypoints.end(); keypoint != keypointEnd; ++keypoint)
-        {
-            keypoint->angle = IC_Angle(image, keypoint->pt, umax);
-        }
+
+
+   static void computeOrientation(const Mat& image, vector<KeyPoint>& keypoints, const vector<int>& umax) { 
+        #pragma omp parallel for 
+        for (int i = 0,keypoints_size=keypoints.size(); i < keypoints_size; i++) { 
+        keypoints[i].angle = IC_Angle(image, keypoints[i].pt, umax); 
+        } 
     }
 
     void ExtractorNode::DivideNode(ExtractorNode &n1, ExtractorNode &n2, ExtractorNode &n3, ExtractorNode &n4)
@@ -535,23 +469,9 @@ namespace ORB_SLAM3
 
     }
 
-    static bool compareNodes(pair<int,ExtractorNode*>& e1, pair<int,ExtractorNode*>& e2){
-        if(e1.first < e2.first){
-            return true;
-        }
-        else if(e1.first > e2.first){
-            return false;
-        }
-        else{
-            if(e1.second->UL.x < e2.second->UL.x){
-                return true;
-            }
-            else{
-                return false;
-            }
-        }
-    }
-
+inline static bool compareNodes(const pair<int, ExtractorNode*>& e1, const pair<int, ExtractorNode*>& e2) {
+    return (e1.first < e2.first) || (e1.first == e2.first && e1.second->UL.x < e2.second->UL.x);
+}
     vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>& vToDistributeKeys, const int &minX,
                                                          const int &maxX, const int &minY, const int &maxY, const int &N, const int &level)
     {
@@ -1083,115 +1003,101 @@ namespace ORB_SLAM3
             computeOrbDescriptor(keypoints[i], image, &pattern[0], descriptors.ptr((int)i));
     }
 
-    int ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPoint>& _keypoints,
-                                  OutputArray _descriptors, std::vector<int> &vLappingArea)
-    {
-        //cout << "[ORBextractor]: Max Features: " << nfeatures << endl;
-        if(_image.empty())
-            return -1;
+//modified
+int ORBextractor::operator()(InputArray _image, InputArray _mask, vector<KeyPoint>& _keypoints,
+                             OutputArray _descriptors, std::vector<int> &vLappingArea) {
+    if(_image.empty())
+        return -1;
 
-        Mat image = _image.getMat();
-        assert(image.type() == CV_8UC1 );
+    Mat image = _image.getMat();
+    assert(image.type() == CV_8UC1);
 
-        // Pre-compute the scale pyramid
-        ComputePyramid(image);
+    // Pre-compute the scale pyramid
+    ComputePyramid(image);
 
-        vector < vector<KeyPoint> > allKeypoints;
-        ComputeKeyPointsOctTree(allKeypoints);
-        //ComputeKeyPointsOld(allKeypoints);
+    vector<vector<KeyPoint>> allKeypoints;
+    ComputeKeyPointsOctTree(allKeypoints);
 
-        Mat descriptors;
+    int nkeypoints = 0;
+    for (int level = 0; level < nlevels; ++level)
+        nkeypoints += allKeypoints[level].size();
 
-        int nkeypoints = 0;
-        for (int level = 0; level < nlevels; ++level)
-            nkeypoints += (int)allKeypoints[level].size();
-        if( nkeypoints == 0 )
-            _descriptors.release();
-        else
-        {
-            _descriptors.create(nkeypoints, 32, CV_8U);
-            descriptors = _descriptors.getMat();
-        }
+    if (nkeypoints == 0)
+        _descriptors.release();
+    else {
+        _descriptors.create(nkeypoints, 32, CV_8U);
+    }
+    Mat descriptors = _descriptors.getMat();
 
-        //_keypoints.clear();
-        //_keypoints.reserve(nkeypoints);
-        _keypoints = vector<cv::KeyPoint>(nkeypoints);
+    _keypoints = vector<cv::KeyPoint>(nkeypoints);
 
-        int offset = 0;
-        //Modified for speeding up stereo fisheye matching
-        int monoIndex = 0, stereoIndex = nkeypoints-1;
-        for (int level = 0; level < nlevels; ++level)
-        {
-            vector<KeyPoint>& keypoints = allKeypoints[level];
-            int nkeypointsLevel = (int)keypoints.size();
+    int offset = 0;
+    int monoIndex = 0, stereoIndex = nkeypoints-1;
+    for (int level = 0; level < nlevels; ++level) {
+        vector<KeyPoint>& keypoints = allKeypoints[level];
+        int nkeypointsLevel = keypoints.size();
 
-            if(nkeypointsLevel==0)
-                continue;
+        if(nkeypointsLevel == 0)
+            continue;
 
-            // preprocess the resized image
-            Mat workingMat = mvImagePyramid[level].clone();
-            GaussianBlur(workingMat, workingMat, Size(7, 7), 2, 2, BORDER_REFLECT_101);
+        Mat workingMat = mvImagePyramid[level];
+        GaussianBlur(workingMat, workingMat, Size(7, 7), 2, 2, BORDER_REFLECT_101);
 
-            // Compute the descriptors
-            //Mat desc = descriptors.rowRange(offset, offset + nkeypointsLevel);
-            Mat desc = cv::Mat(nkeypointsLevel, 32, CV_8U);
-            computeDescriptors(workingMat, keypoints, desc, pattern);
+        Mat desc(nkeypointsLevel, 32, CV_8U);
+        computeDescriptors(workingMat, keypoints, desc, pattern);
 
-            offset += nkeypointsLevel;
+        float scale = mvScaleFactor[level];
+        for (int i = 0; i < nkeypointsLevel; ++i) {
+            KeyPoint& keypoint = keypoints[i];
 
+            if (level != 0) {
+                keypoint.pt *= scale;
+            }
 
-            float scale = mvScaleFactor[level]; //getScale(level, firstLevel, scaleFactor);
-            int i = 0;
-            for (vector<KeyPoint>::iterator keypoint = keypoints.begin(),
-                         keypointEnd = keypoints.end(); keypoint != keypointEnd; ++keypoint){
-
-                // Scale keypoint coordinates
-                if (level != 0){
-                    keypoint->pt *= scale;
-                }
-
-                if(keypoint->pt.x >= vLappingArea[0] && keypoint->pt.x <= vLappingArea[1]){
-                    _keypoints.at(stereoIndex) = (*keypoint);
-                    desc.row(i).copyTo(descriptors.row(stereoIndex));
-                    stereoIndex--;
-                }
-                else{
-                    _keypoints.at(monoIndex) = (*keypoint);
-                    desc.row(i).copyTo(descriptors.row(monoIndex));
-                    monoIndex++;
-                }
-                i++;
+            Mat descRow = desc.row(i);
+            if(keypoint.pt.x >= vLappingArea[0] && keypoint.pt.x <= vLappingArea[1]) {
+                _keypoints[stereoIndex] = keypoint;
+                descRow.copyTo(descriptors.row(stereoIndex));
+                stereoIndex--;
+            } else {
+                _keypoints[monoIndex] = keypoint;
+                descRow.copyTo(descriptors.row(monoIndex));
+                monoIndex++;
             }
         }
-        //cout << "[ORBextractor]: extracted " << _keypoints.size() << " KeyPoints" << endl;
-        return monoIndex;
+        offset += nkeypointsLevel;
     }
 
-    void ORBextractor::ComputePyramid(cv::Mat image)
-    {
-        for (int level = 0; level < nlevels; ++level)
-        {
-            float scale = mvInvScaleFactor[level];
-            Size sz(cvRound((float)image.cols*scale), cvRound((float)image.rows*scale));
-            Size wholeSize(sz.width + EDGE_THRESHOLD*2, sz.height + EDGE_THRESHOLD*2);
-            Mat temp(wholeSize, image.type()), masktemp;
-            mvImagePyramid[level] = temp(Rect(EDGE_THRESHOLD, EDGE_THRESHOLD, sz.width, sz.height));
-
-            // Compute the resized image
-            if( level != 0 )
-            {
-                resize(mvImagePyramid[level-1], mvImagePyramid[level], sz, 0, 0, INTER_LINEAR);
-
-                copyMakeBorder(mvImagePyramid[level], temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
-                               BORDER_REFLECT_101+BORDER_ISOLATED);
-            }
-            else
-            {
-                copyMakeBorder(image, temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD,
-                               BORDER_REFLECT_101);
-            }
-        }
-
+    return monoIndex;
+}
+    
+    //modified
+    void ORBextractor::ComputePyramid(cv::Mat image) {
+    vector<Size> sizes(nlevels);
+    for (int level = 0; level < nlevels; ++level) {
+        float scale = mvInvScaleFactor[level];
+        sizes[level] = Size(cvRound((float)image.cols * scale), cvRound((float)image.rows * scale));
     }
+   
+    // Handle level 0 separately
+    Size wholeSize(image.cols + (EDGE_THRESHOLD << 1), image.rows + (EDGE_THRESHOLD << 1));
+    Mat temp(wholeSize, image.type());
+    copyMakeBorder(image, temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, BORDER_REFLECT_101);
+    mvImagePyramid[0] = temp(Rect(EDGE_THRESHOLD, EDGE_THRESHOLD, image.cols, image.rows));
+
+    // Handle the remaining levels
+    for (int level = 1; level < nlevels; ++level) {
+        Size sz = sizes[level];
+        wholeSize = Size(sz.width + (EDGE_THRESHOLD << 1), sz.height + (EDGE_THRESHOLD << 1));
+        temp.create(wholeSize, image.type());
+        mvImagePyramid[level] = temp(Rect(EDGE_THRESHOLD, EDGE_THRESHOLD, sz.width, sz.height));
+
+        // Compute the resized image
+
+
+        resize(mvImagePyramid[level-1], mvImagePyramid[level], sz, 0, 0, INTER_LINEAR);
+        copyMakeBorder(mvImagePyramid[level], temp, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, EDGE_THRESHOLD, BORDER_REFLECT_101 + BORDER_ISOLATED);
+    }
+}
 
 } //namespace ORB_SLAM
