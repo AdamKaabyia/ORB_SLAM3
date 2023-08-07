@@ -27,7 +27,7 @@
 
 namespace ORB_SLAM3
 {
-	bool sortByVal(const pair<MapPoint*, int> &a, const pair<MapPoint*, int> &b){
+	inline bool sortByVal(const pair<MapPoint*, int> &a, const pair<MapPoint*, int> &b){
 		return (a.second < b.second);
 	}
 
@@ -139,15 +139,10 @@ namespace ORB_SLAM3
 			for(map<KeyFrame*,tuple<int,int>>::const_iterator mit=observations.begin(); mit!=observations.end(); mit++){
 				
 				KeyFrame* pKF = mit->first;
-				if(pKF->isBad() || pKF->mnId>maxKFid)
+				if((pKF->isBad() || pKF->mnId>maxKFid)||(optimizer.vertex(id) == NULL || optimizer.vertex(pKF->mnId) == NULL))
 					continue;
-				if(optimizer.vertex(id) == NULL || optimizer.vertex(pKF->mnId) == NULL)
-					continue;
-				
 				nEdges++;
-
 				const int leftIndex = get<0>(mit->second);
-
 				if(leftIndex != -1 && pKF->mvuRight[get<0>(mit->second)]<0){
 					const cv::KeyPoint &kpUn = pKF->mvKeysUn[leftIndex];
 
@@ -295,42 +290,32 @@ namespace ORB_SLAM3
 					int numMonoBadPoints = 0, numMonoOptPoints = 0;
 					int numStereoBadPoints = 0, numStereoOptPoints = 0;
 					vector<MapPoint*> vpMonoMPsOpt, vpStereoMPsOpt;
-
+					#pragma omp parallel for
 					for(size_t i2=0, iend=vpEdgesMono.size(); i2<iend;i2++){
 						ORB_SLAM3::EdgeSE3ProjectXYZ* e = vpEdgesMono[i2];
 						MapPoint* pMP = vpMapPointEdgeMono[i2];
 						KeyFrame* pKFedge = vpEdgeKFMono[i2];
-
-						if(pKF != pKFedge){
+						if((pKF != pKFedge)||pMP->isBad()){
 							continue;
 						}
-
-						if(pMP->isBad())
-							continue;
-
 						if(e->chi2()>5.991 || !e->isDepthPositive()){
 							numMonoBadPoints++;
-
 						}else{
 							numMonoOptPoints++;
 							vpMonoMPsOpt.push_back(pMP);
 						}
 
 					}
-
+                    #pragma omp parallel for
 					for(size_t i2=0, iend=vpEdgesStereo.size(); i2<iend;i2++)
 					{
 						g2o::EdgeStereoSE3ProjectXYZ* e = vpEdgesStereo[i2];
 						MapPoint* pMP = vpMapPointEdgeStereo[i2];
 						KeyFrame* pKFedge = vpEdgeKFMono[i2];
 
-						if(pKF != pKFedge){
+						if((pKF != pKFedge)||(pMP->isBad())){
 							continue;
 						}
-
-						if(pMP->isBad())
-							continue;
-
 						if(e->chi2()>7.815 || !e->isDepthPositive()){
 							numStereoBadPoints++;
 						}else{
@@ -842,7 +827,7 @@ namespace ORB_SLAM3
 		// im not sure i can parallel this section cause it uses mutex and this means its critical section
 		{
 		unique_lock<mutex> lock(MapPoint::mGlobalMutex);
-		
+		#pragma omp parallel for
 		for(int i=0; i<N; i++)
 		{
 			MapPoint* pMP = pFrame->mvpMapPoints[i];
@@ -1130,6 +1115,7 @@ namespace ORB_SLAM3
 		num_fixedKF = 0;
 		list<MapPoint*> lLocalMapPoints;
 		set<MapPoint*> sNumObsMP;
+		#pragma omp parallel for
 		for(list<KeyFrame*>::iterator lit=lLocalKeyFrames.begin() , lend=lLocalKeyFrames.end(); lit!=lend; lit++)
 		{
 			KeyFrame* pKFi = *lit;
@@ -1155,6 +1141,7 @@ namespace ORB_SLAM3
 
 		// Fixed Keyframes. Keyframes that see Local MapPoints but that are not Local Keyframes
 		list<KeyFrame*> lFixedCameras;
+		#pragma omp parallel for
 		for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++)
 		{
 			map<KeyFrame*,tuple<int,int>> observations = (*lit)->GetObservations();
@@ -1204,6 +1191,7 @@ namespace ORB_SLAM3
 		pCurrentMap->msFixedKFs.clear();
 
 		// Set Local KeyFrame vertices
+		#pragma omp parallel for
 		for(list<KeyFrame*>::iterator lit=lLocalKeyFrames.begin(), lend=lLocalKeyFrames.end(); lit!=lend; lit++)
 		{
 			KeyFrame* pKFi = *lit;
@@ -1221,6 +1209,7 @@ namespace ORB_SLAM3
 		num_OptKF = lLocalKeyFrames.size();
 
 		// Set Fixed KeyFrame vertices
+		#pragma omp parallel for
 		for(list<KeyFrame*>::iterator lit=lFixedCameras.begin(), lend=lFixedCameras.end(); lit!=lend; lit++)
 		{
 			KeyFrame* pKFi = *lit;
@@ -1272,7 +1261,7 @@ namespace ORB_SLAM3
 		int nPoints = 0;
 
 		int nEdges = 0;
-
+		#pragma omp parallel for
 		for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++)
 		{
 			MapPoint* pMP = *lit;
@@ -1287,6 +1276,7 @@ namespace ORB_SLAM3
 			const map<KeyFrame*,tuple<int,int>> observations = pMP->GetObservations();
 
 			//Set edges
+			#pragma omp parallel for
 			for(map<KeyFrame*,tuple<int,int>>::const_iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
 			{
 				KeyFrame* pKFi = mit->first;
@@ -1407,7 +1397,8 @@ namespace ORB_SLAM3
 		vector<pair<KeyFrame*,MapPoint*> > vToErase;
 		vToErase.reserve(vpEdgesMono.size()+vpEdgesBody.size()+vpEdgesStereo.size());
 
-		// Check inlier observations       
+		// Check inlier observations
+		#pragma omp parallel for       
 		for(size_t i=0, iend=vpEdgesMono.size(); i<iend;i++)
 		{
 			ORB_SLAM3::EdgeSE3ProjectXYZ* e = vpEdgesMono[i];
@@ -1422,7 +1413,7 @@ namespace ORB_SLAM3
 				vToErase.push_back(make_pair(pKFi,pMP));
 			}
 		}
-
+		#pragma omp parallel for
 		for(size_t i=0, iend=vpEdgesBody.size(); i<iend;i++)
 		{
 			ORB_SLAM3::EdgeSE3ProjectXYZToBody* e = vpEdgesBody[i];
@@ -1437,7 +1428,7 @@ namespace ORB_SLAM3
 				vToErase.push_back(make_pair(pKFi,pMP));
 			}
 		}
-
+		#pragma omp parallel for
 		for(size_t i=0, iend=vpEdgesStereo.size(); i<iend;i++)
 		{
 			g2o::EdgeStereoSE3ProjectXYZ* e = vpEdgesStereo[i];
@@ -1470,6 +1461,7 @@ namespace ORB_SLAM3
 
 		// Recover optimized data
 		//Keyframes
+		#pragma omp parallel for
 		for(list<KeyFrame*>::iterator lit=lLocalKeyFrames.begin(), lend=lLocalKeyFrames.end(); lit!=lend; lit++)
 		{
 			KeyFrame* pKFi = *lit;
@@ -1480,6 +1472,7 @@ namespace ORB_SLAM3
 		}
 
 		//Points
+		#pragma omp parallel for
 		for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++)
 		{
 			MapPoint* pMP = *lit;
@@ -1526,6 +1519,7 @@ namespace ORB_SLAM3
 		const int minFeat = 100;
 
 		// Set KeyFrame vertices
+		#pragma omp parallel for
 		for(size_t i=0, iend=vpKFs.size(); i<iend;i++)
 		{
 			KeyFrame* pKF = vpKFs[i];
@@ -1570,6 +1564,7 @@ namespace ORB_SLAM3
 
 		// Set Loop edges
 		int count_loop = 0;
+		#pragma omp parallel for
 		for(map<KeyFrame *, set<KeyFrame *> >::const_iterator mit = LoopConnections.begin(), mend=LoopConnections.end(); mit!=mend; mit++)
 		{
 			KeyFrame* pKF = mit->first;
@@ -1577,7 +1572,7 @@ namespace ORB_SLAM3
 			const set<KeyFrame*> &spConnections = mit->second;
 			const g2o::Sim3 Siw = vScw[nIDi];
 			const g2o::Sim3 Swi = Siw.inverse();
-
+			#pragma omp parallel for
 			for(set<KeyFrame*>::const_iterator sit=spConnections.begin(), send=spConnections.end(); sit!=send; sit++)
 			{
 				const long unsigned int nIDj = (*sit)->mnId;
@@ -1601,6 +1596,7 @@ namespace ORB_SLAM3
 		}
 
 		// Set normal edges
+		#pragma omp parallel for
 		for(size_t i=0, iend=vpKFs.size(); i<iend; i++)
 		{
 			KeyFrame* pKF = vpKFs[i];
@@ -1644,6 +1640,7 @@ namespace ORB_SLAM3
 
 			// Loop edges
 			const set<KeyFrame*> sLoopEdges = pKF->GetLoopEdges();
+			#pragma omp parallel for
 			for(set<KeyFrame*>::const_iterator sit=sLoopEdges.begin(), send=sLoopEdges.end(); sit!=send; sit++)
 			{
 				KeyFrame* pLKF = *sit;
@@ -1670,6 +1667,7 @@ namespace ORB_SLAM3
 
 			// Covisibility graph edges
 			const vector<KeyFrame*> vpConnectedKFs = pKF->GetCovisiblesByWeight(minFeat);
+			#pragma omp parallel for
 			for(vector<KeyFrame*>::const_iterator vit=vpConnectedKFs.begin(); vit!=vpConnectedKFs.end(); vit++)
 			{
 				KeyFrame* pKFn = *vit;
@@ -1729,6 +1727,7 @@ namespace ORB_SLAM3
 		unique_lock<mutex> lock(pMap->mMutexMapUpdate);
 
 		// SE3 Pose Recovering. Sim3:[sR t;0 1] -> SE3:[R t/s;0 1]
+		#pragma omp parallel for
 		for(size_t i=0;i<vpKFs.size();i++)
 		{
 			KeyFrame* pKFi = vpKFs[i];
@@ -1745,6 +1744,7 @@ namespace ORB_SLAM3
 		}
 
 		// Correct points. Transform to "non-optimized" reference keyframe pose and transform back with optimized pose
+		#pragma omp parallel for
 		for(size_t i=0, iend=vpMPs.size(); i<iend; i++)
 		{
 			MapPoint* pMP = vpMPs[i];
@@ -1809,7 +1809,7 @@ namespace ORB_SLAM3
 		vector<bool> vpBadPose(nMaxKFid+1);
 
 		const int minFeat = 100;
-
+		#pragma omp parallel for
 		for(KeyFrame* pKFi : vpFixedKFs)
 		{
 			if(pKFi->isBad())
@@ -1841,6 +1841,7 @@ namespace ORB_SLAM3
 		Verbose::PrintMess("Opt_Essential: vpFixedKFs loaded", Verbose::VERBOSITY_DEBUG);
 
 		set<unsigned long> sIdKF;
+		#pragma omp parallel for
 		for(KeyFrame* pKFi : vpFixedCorrectedKFs)
 		{
 			if(pKFi->isBad())
@@ -1873,7 +1874,7 @@ namespace ORB_SLAM3
 			vpGoodPose[nIDi] = true;
 			vpBadPose[nIDi] = true;
 		}
-
+		#pragma omp parallel for
 		for(KeyFrame* pKFi : vpNonFixedKFs)
 		{
 			if(pKFi->isBad())
@@ -1915,7 +1916,7 @@ namespace ORB_SLAM3
 		set<KeyFrame*> spKFs(vpKFs.begin(), vpKFs.end());
 
 		const Eigen::Matrix<double,7,7> matLambda = Eigen::Matrix<double,7,7>::Identity();
-
+		#pragma omp parallel for
 		for(KeyFrame* pKFi : vpKFs)
 		{
 			int num_connections = 0;
@@ -1968,6 +1969,7 @@ namespace ORB_SLAM3
 
 			// Loop edges
 			const set<KeyFrame*> sLoopEdges = pKFi->GetLoopEdges();
+			#pragma omp parallel for
 			for(set<KeyFrame*>::const_iterator sit=sLoopEdges.begin(), send=sLoopEdges.end(); sit!=send; sit++)
 			{
 				KeyFrame* pLKF = *sit;
@@ -2004,6 +2006,7 @@ namespace ORB_SLAM3
 
 			// Covisibility graph edges
 			const vector<KeyFrame*> vpConnectedKFs = pKFi->GetCovisiblesByWeight(minFeat);
+			#pragma omp parallel for
 			for(vector<KeyFrame*>::const_iterator vit=vpConnectedKFs.begin(); vit!=vpConnectedKFs.end(); vit++)
 			{
 				KeyFrame* pKFn = *vit;
@@ -2055,6 +2058,7 @@ namespace ORB_SLAM3
 		unique_lock<mutex> lock(pMap->mMutexMapUpdate);
 
 		// SE3 Pose Recovering. Sim3:[sR t;0 1] -> SE3:[R t/s;0 1]
+		#pragma omp parallel for
 		for(KeyFrame* pKFi : vpNonFixedKFs)
 		{
 			if(pKFi->isBad())
@@ -2074,6 +2078,7 @@ namespace ORB_SLAM3
 		}
 
 		// Correct points. Transform to "non-optimized" reference keyframe pose and transform back with optimized pose
+		#pragma omp parallel for
 		for(MapPoint* pMPi : vpNonCorrectedMPs)
 		{
 			if(pMPi->isBad())
@@ -2161,7 +2166,7 @@ namespace ORB_SLAM3
 		int nMatchWithoutMP = 0;
 
 		vector<int> vIdsOnlyInKF2;
-
+		#pragma omp parallel for
 		for(int i=0; i<N; i++)
 		{
 			if(!vpMatches1[i])
@@ -2308,7 +2313,9 @@ namespace ORB_SLAM3
 		// Check inliers
 		int nBad=0;
 		int nBadOutKF2 = 0;
-		for(size_t i=0; i<vpEdges12.size();i++)
+		size_t vpEdges12_size=vpEdges12.size();
+		#pragma omp parallel for
+		for(size_t i=0; i<vpEdges12_size;i++)
 		{
 			ORB_SLAM3::EdgeSim3ProjectXYZ* e12 = vpEdges12[i];
 			ORB_SLAM3::EdgeInverseSim3ProjectXYZ* e21 = vpEdges21[i];
@@ -2352,7 +2359,9 @@ namespace ORB_SLAM3
 
 		int nIn = 0;
 		mAcumHessian = Eigen::MatrixXd::Zero(7, 7);
-		for(size_t i=0; i<vpEdges12.size();i++)
+		vpEdges12_size=vpEdges12.size();
+		#pragma omp parallel for
+		for(size_t i=0; i<vpEdges12_size;i++)
 		{
 			ORB_SLAM3::EdgeSim3ProjectXYZ* e12 = vpEdges12[i];
 			ORB_SLAM3::EdgeInverseSim3ProjectXYZ* e21 = vpEdges21[i];
@@ -2399,6 +2408,7 @@ namespace ORB_SLAM3
 		vpOptimizableKFs.reserve(Nd);
 		vpOptimizableKFs.push_back(pKF);
 		pKF->mnBALocalForKF = pKF->mnId;
+		#pragma omp parallel for
 		for(int i=1; i<Nd; i++)
 		{
 			if(vpOptimizableKFs.back()->mPrevKF)
@@ -2414,9 +2424,11 @@ namespace ORB_SLAM3
 
 		// Optimizable points seen by temporal optimizable keyframes
 		list<MapPoint*> lLocalMapPoints;
+		#pragma omp parallel for
 		for(int i=0; i<N; i++)
 		{
 			vector<MapPoint*> vpMPs = vpOptimizableKFs[i]->GetMapPointMatches();
+			#pragma omp parallel for
 			for(vector<MapPoint*>::iterator vit=vpMPs.begin(), vend=vpMPs.end(); vit!=vend; vit++)
 			{
 				MapPoint* pMP = *vit;
@@ -2447,6 +2459,7 @@ namespace ORB_SLAM3
 
 		// Optimizable visual KFs
 		const int maxCovKF = 0;
+		#pragma omp parallel for
 		for(int i=0, iend=vpNeighsKFs.size(); i<iend; i++)
 		{
 			if(lpOptVisKFs.size() >= maxCovKF)
@@ -2477,10 +2490,11 @@ namespace ORB_SLAM3
 
 		// Fixed KFs which are not covisible optimizable
 		const int maxFixKF = 200;
-
+		#pragma omp parallel for
 		for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++)
 		{
 			map<KeyFrame*,tuple<int,int>> observations = (*lit)->GetObservations();
+			#pragma omp parallel for
 			for(map<KeyFrame*,tuple<int,int>>::iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
 			{
 				KeyFrame* pKFi = mit->first;
@@ -2524,6 +2538,7 @@ namespace ORB_SLAM3
 
 		// Set Local temporal KeyFrame vertices
 		N=vpOptimizableKFs.size();
+		#pragma omp parallel for
 		for(int i=0; i<N; i++)
 		{
 			KeyFrame* pKFi = vpOptimizableKFs[i];
@@ -2551,6 +2566,7 @@ namespace ORB_SLAM3
 		}
 
 		// Set Local visual KeyFrame vertices
+		#pragma omp parallel for
 		for(list<KeyFrame*>::iterator it=lpOptVisKFs.begin(), itEnd = lpOptVisKFs.end(); it!=itEnd; it++)
 		{
 			KeyFrame* pKFi = *it;
@@ -2561,6 +2577,7 @@ namespace ORB_SLAM3
 		}
 
 		// Set Fixed KeyFrame vertices
+		#pragma omp parallel for
 		for(list<KeyFrame*>::iterator lit=lFixedKeyFrames.begin(), lend=lFixedKeyFrames.end(); lit!=lend; lit++)
 		{
 			KeyFrame* pKFi = *lit;
@@ -2590,7 +2607,7 @@ namespace ORB_SLAM3
 		vector<EdgeInertial*> vei(N,(EdgeInertial*)NULL);
 		vector<EdgeGyroRW*> vegr(N,(EdgeGyroRW*)NULL);
 		vector<EdgeAccRW*> vear(N,(EdgeAccRW*)NULL);
-
+		#pragma omp parallel for
 		for(int i=0;i<N;i++)
 		{
 			KeyFrame* pKFi = vpOptimizableKFs[i];
@@ -2693,16 +2710,19 @@ namespace ORB_SLAM3
 		const unsigned long iniMPid = maxKFid*5;
 
 		map<int,int> mVisEdges;
+		#pragma omp parallel for
 		for(int i=0;i<N;i++)
 		{
 			KeyFrame* pKFi = vpOptimizableKFs[i];
 			mVisEdges[pKFi->mnId] = 0;
 		}
+		#pragma omp parallel for
 		for(list<KeyFrame*>::iterator lit=lFixedKeyFrames.begin(), lend=lFixedKeyFrames.end(); lit!=lend; lit++)
 		{
 			mVisEdges[(*lit)->mnId] = 0;
 		}
-
+		
+		#pragma omp parallel for
 		for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++)
 		{
 			MapPoint* pMP = *lit;
@@ -2716,6 +2736,7 @@ namespace ORB_SLAM3
 			const map<KeyFrame*,tuple<int,int>> observations = pMP->GetObservations();
 
 			// Create visual constraints
+			#pragma omp parallel for
 			for(map<KeyFrame*,tuple<int,int>>::const_iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
 			{
 				KeyFrame* pKFi = mit->first;
@@ -2830,6 +2851,7 @@ namespace ORB_SLAM3
 		}
 
 		//cout << "Total map points: " << lLocalMapPoints.size() << endl;
+		#pragma omp parallel for
 		for(map<int,int>::iterator mit=mVisEdges.begin(), mend=mVisEdges.end(); mit!=mend; mit++)
 		{
 			assert(mit->second>=3);
@@ -2848,6 +2870,7 @@ namespace ORB_SLAM3
 
 		// Check inlier observations
 		// Mono
+		#pragma omp parallel for
 		for(size_t i=0, iend=vpEdgesMono.size(); i<iend;i++)
 		{
 			EdgeMono* e = vpEdgesMono[i];
@@ -2866,6 +2889,7 @@ namespace ORB_SLAM3
 
 
 		// Stereo
+		#pragma omp parallel for
 		for(size_t i=0, iend=vpEdgesStereo.size(); i<iend;i++)
 		{
 			EdgeStereo* e = vpEdgesStereo[i];
@@ -2895,7 +2919,8 @@ namespace ORB_SLAM3
 
 
 		if(!vToErase.empty())
-		{
+		{	
+			#pragma omp parallel for
 			for(size_t i=0;i<vToErase.size();i++)
 			{
 				KeyFrame* pKFi = vToErase[i].first;
@@ -2904,13 +2929,14 @@ namespace ORB_SLAM3
 				pMPi->EraseObservation(pKFi);
 			}
 		}
-
+		#pragma omp parallel for
 		for(list<KeyFrame*>::iterator lit=lFixedKeyFrames.begin(), lend=lFixedKeyFrames.end(); lit!=lend; lit++)
 			(*lit)->mnBAFixedForKF = 0;
 
 		// Recover optimized data
 		// Local temporal Keyframes
 		N=vpOptimizableKFs.size();
+		#pragma omp parallel for
 		for(int i=0; i<N; i++)
 		{
 			KeyFrame* pKFi = vpOptimizableKFs[i];
@@ -2934,6 +2960,7 @@ namespace ORB_SLAM3
 		}
 
 		// Local visual KeyFrame
+		#pragma omp parallel for
 		for(list<KeyFrame*>::iterator it=lpOptVisKFs.begin(), itEnd = lpOptVisKFs.end(); it!=itEnd; it++)
 		{
 			KeyFrame* pKFi = *it;
@@ -2944,6 +2971,7 @@ namespace ORB_SLAM3
 		}
 
 		//Points
+		#pragma omp parallel for
 		for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++)
 		{
 			MapPoint* pMP = *lit;
@@ -2997,6 +3025,7 @@ namespace ORB_SLAM3
 		// Perform marginalization (Schur complement)
 		Eigen::JacobiSVD<Eigen::MatrixXd> svd(Hn.block(a+c,a+c,b,b),Eigen::ComputeThinU | Eigen::ComputeThinV);
 		Eigen::JacobiSVD<Eigen::MatrixXd>::SingularValuesType singularValues_inv=svd.singularValues();
+		#pragma omp parallel for
 		for (int i=0; i<b; ++i)
 		{
 			if (singularValues_inv(i)>1e-6)
@@ -3060,7 +3089,8 @@ namespace ORB_SLAM3
 		optimizer.setAlgorithm(solver);
 
 		// Set KeyFrame vertices (fixed poses and optimizable velocities)
-		for(size_t i=0; i<vpKFs.size(); i++)
+		#pragma omp parallel for
+		for(size_t i=0,vpKFs_size=vpKFs.size();i<vpKFs_size;  i++)
 		{
 			KeyFrame* pKFi = vpKFs[i];
 			if(pKFi->mnId>maxKFid)
@@ -3128,8 +3158,8 @@ namespace ORB_SLAM3
 		vector<pair<KeyFrame*,KeyFrame*> > vppUsedKF;
 		vppUsedKF.reserve(vpKFs.size());
 		//std::cout << "build optimization graph" << std::endl;
-
-		for(size_t i=0;i<vpKFs.size();i++)
+		#pragma omp parallel for
+		for(size_t i=0,vpKFs_size=vpKFs.size();i<vpKFs_size;i++)
 		{
 			KeyFrame* pKFi = vpKFs[i];
 
@@ -3198,6 +3228,7 @@ namespace ORB_SLAM3
 
 		//Keyframes velocities and biases
 		const int N = vpKFs.size();
+		#pragma omp parallel for
 		for(size_t i=0; i<N; i++)
 		{
 			KeyFrame* pKFi = vpKFs[i];
@@ -3242,7 +3273,8 @@ namespace ORB_SLAM3
 		optimizer.setAlgorithm(solver);
 
 		// Set KeyFrame vertices (fixed poses and optimizable velocities)
-		for(size_t i=0; i<vpKFs.size(); i++)
+		#pragma omp parallel for
+		for(size_t i=0,vpKFs_size=vpKFs.size(); i<vpKFs_size; i++)
 		{
 			KeyFrame* pKFi = vpKFs[i];
 			if(pKFi->mnId>maxKFid)
@@ -3301,7 +3333,7 @@ namespace ORB_SLAM3
 		vpei.reserve(vpKFs.size());
 		vector<pair<KeyFrame*,KeyFrame*> > vppUsedKF;
 		vppUsedKF.reserve(vpKFs.size());
-
+		#pragma omp parallel for
 		for(size_t i=0;i<vpKFs.size();i++)
 		{
 			KeyFrame* pKFi = vpKFs[i];
@@ -3363,6 +3395,7 @@ namespace ORB_SLAM3
 
 		//Keyframes velocities and biases
 		const int N = vpKFs.size();
+		#pragma omp parallel for
 		for(size_t i=0; i<N; i++)
 		{
 			KeyFrame* pKFi = vpKFs[i];
@@ -3402,7 +3435,8 @@ namespace ORB_SLAM3
 		optimizer.setAlgorithm(solver);
 
 		// Set KeyFrame vertices (all variables are fixed)
-		for(size_t i=0; i<vpKFs.size(); i++)
+		#pragma omp parallel for
+		for(size_t i=0,vpKFs_size=vpKFs.size(); i<vpKFs_size; i++)
 		{
 			KeyFrame* pKFi = vpKFs[i];
 			if(pKFi->mnId>maxKFid)
@@ -3440,7 +3474,8 @@ namespace ORB_SLAM3
 
 		// Graph edges
 		int count_edges = 0;
-		for(size_t i=0;i<vpKFs.size();i++)
+		#pragma omp parallel for
+		for(size_t i=0, vpKFs_size=vpKFs.size();i<vpKFs_size;i++)
 		{
 			KeyFrame* pKFi = vpKFs[i];
 
@@ -3521,6 +3556,7 @@ namespace ORB_SLAM3
 
 		// Set fixed KeyFrame vertices
 		int numInsertedPoints = 0;
+		#pragma omp parallel for
 		for(KeyFrame* pKFi : vpFixedKF)
 		{
 			if(pKFi->isBad() || pKFi->GetMap() != pCurrentMap)
@@ -3541,6 +3577,7 @@ namespace ORB_SLAM3
 				maxKFid=pKFi->mnId;
 
 			set<MapPoint*> spViewMPs = pKFi->GetMapPoints();
+			#pragma omp parallel for
 			for(MapPoint* pMPi : spViewMPs)
 			{
 				if(pMPi)
@@ -3560,6 +3597,7 @@ namespace ORB_SLAM3
 		// Set non fixed Keyframe vertices
 		set<KeyFrame*> spAdjustKF(vpAdjustKF.begin(), vpAdjustKF.end());
 		numInsertedPoints = 0;
+		#pragma omp parallel for
 		for(KeyFrame* pKFi : vpAdjustKF)
 		{
 			if(pKFi->isBad() || pKFi->GetMap() != pCurrentMap)
@@ -3576,6 +3614,7 @@ namespace ORB_SLAM3
 				maxKFid=pKFi->mnId;
 
 			set<MapPoint*> spViewMPs = pKFi->GetMapPoints();
+			#pragma omp parallel for
 			for(MapPoint* pMPi : spViewMPs)
 			{
 				if(pMPi)
@@ -3622,7 +3661,8 @@ namespace ORB_SLAM3
 		map<KeyFrame*, int> mpObsKFs;
 		map<KeyFrame*, int> mpObsFinalKFs;
 		map<MapPoint*, int> mpObsMPs;
-		for(unsigned int i=0; i < vpMPs.size(); ++i)
+		#pragma omp parallel for
+		for(unsigned int i=0, vpMPs_size=vpMPs.size(); i < vpMPs_size; ++i)
 		{
 			MapPoint* pMPi = vpMPs[i];
 			if(pMPi->isBad())
@@ -3639,6 +3679,7 @@ namespace ORB_SLAM3
 			const map<KeyFrame*,tuple<int,int>> observations = pMPi->GetObservations();
 			int nEdges = 0;
 			//SET EDGES
+			#pragma omp parallel for
 			for(map<KeyFrame*,tuple<int,int>>::const_iterator mit=observations.begin(); mit!=observations.end(); mit++)
 			{
 				KeyFrame* pKF = mit->first;
@@ -3732,6 +3773,7 @@ namespace ORB_SLAM3
 		{
 			// Check inlier observations
 			int badMonoMP = 0, badStereoMP = 0;
+			#pragma omp parallel for
 			for(size_t i=0, iend=vpEdgesMono.size(); i<iend;i++)
 			{
 				ORB_SLAM3::EdgeSE3ProjectXYZ* e = vpEdgesMono[i];
@@ -3747,7 +3789,7 @@ namespace ORB_SLAM3
 				}
 				e->setRobustKernel(0);
 			}
-
+			#pragma omp parallel for
 			for(size_t i=0, iend=vpEdgesStereo.size(); i<iend;i++)
 			{
 				g2o::EdgeStereoSE3ProjectXYZ* e = vpEdgesStereo[i];
@@ -3777,6 +3819,7 @@ namespace ORB_SLAM3
 
 		// Check inlier observations
 		int badMonoMP = 0, badStereoMP = 0;
+		#pragma omp parallel for
 		for(size_t i=0, iend=vpEdgesMono.size(); i<iend;i++)
 		{
 			ORB_SLAM3::EdgeSE3ProjectXYZ* e = vpEdgesMono[i];
@@ -3796,7 +3839,7 @@ namespace ORB_SLAM3
 				spErasedKFs.insert(pKFi);
 			}
 		}
-
+		#pragma omp parallel for
 		for(size_t i=0, iend=vpEdgesStereo.size(); i<iend;i++)
 		{
 			g2o::EdgeStereoSE3ProjectXYZ* e = vpEdgesStereo[i];
@@ -3824,6 +3867,7 @@ namespace ORB_SLAM3
 
 		if(!vToErase.empty())
 		{
+			#pragma omp parallel for
 			for(size_t i=0;i<vToErase.size();i++)
 			{
 				KeyFrame* pKFi = vToErase[i].first;
@@ -3832,6 +3876,7 @@ namespace ORB_SLAM3
 				pMPi->EraseObservation(pKFi);
 			}
 		}
+		#pragma omp parallel for
 		for(unsigned int i=0; i < vpMPs.size(); ++i)
 		{
 			MapPoint* pMPi = vpMPs[i];
@@ -3858,6 +3903,7 @@ namespace ORB_SLAM3
 
 		// Recover optimized data
 		// Keyframes
+		#pragma omp parallel for
 		for(KeyFrame* pKFi : vpAdjustKF)
 		{
 			if(pKFi->isBad())
@@ -3871,7 +3917,7 @@ namespace ORB_SLAM3
 			int numStereoBadPoints = 0, numStereoOptPoints = 0;
 			vector<MapPoint*> vpMonoMPsOpt, vpStereoMPsOpt;
 			vector<MapPoint*> vpMonoMPsBad, vpStereoMPsBad;
-
+			#pragma omp parallel for
 			for(size_t i=0, iend=vpEdgesMono.size(); i<iend;i++)
 			{
 				ORB_SLAM3::EdgeSE3ProjectXYZ* e = vpEdgesMono[i];
@@ -3899,7 +3945,7 @@ namespace ORB_SLAM3
 				}
 
 			}
-
+			#pragma omp parallel for
 			for(size_t i=0, iend=vpEdgesStereo.size(); i<iend;i++)
 			{
 				g2o::EdgeStereoSE3ProjectXYZ* e = vpEdgesStereo[i];
@@ -3949,7 +3995,7 @@ namespace ORB_SLAM3
 		const unsigned long maxKFid = pCurrKF->mnId;
 
 		vector<KeyFrame*> vpOptimizableKFs;
-		vpOptimizableKFs.reserve(2*Nd);
+		vpOptimizableKFs.reserve(Nd<<1);
 
 		// For cov KFS, inertial parameters are not optimized
 		const int maxCovKF = 30;
@@ -3959,6 +4005,7 @@ namespace ORB_SLAM3
 		// Add sliding window for current KF
 		vpOptimizableKFs.push_back(pCurrKF);
 		pCurrKF->mnBALocalForKF = pCurrKF->mnId;
+		#pragma omp parallel for
 		for(int i=1; i<Nd; i++)
 		{
 			if(vpOptimizableKFs.back()->mPrevKF)
@@ -3987,7 +4034,8 @@ namespace ORB_SLAM3
 		pMergeKF->mnBALocalForKF = pCurrKF->mnId;
 
 		// Previous KFs
-		for(int i=1; i<(Nd/2); i++)
+		#pragma omp parallel for
+		for(int i=1,Nd_half=Nd>>1; i<Nd_half; i++)
 		{
 			if(vpOptimizableKFs.back()->mPrevKF)
 			{
@@ -4019,7 +4067,7 @@ namespace ORB_SLAM3
 			vpOptimizableKFs.back()->mnBALocalForKF = pCurrKF->mnId;
 		}
 
-		while(vpOptimizableKFs.size()<(2*Nd))
+		while(vpOptimizableKFs.size()<(Nd<<1))
 		{
 			if(vpOptimizableKFs.back()->mNextKF)
 			{
@@ -4035,9 +4083,11 @@ namespace ORB_SLAM3
 		// Optimizable points seen by optimizable keyframes
 		list<MapPoint*> lLocalMapPoints;
 		map<MapPoint*,int> mLocalObs;
+		#pragma omp parallel for
 		for(int i=0; i<N; i++)
 		{
 			vector<MapPoint*> vpMPs = vpOptimizableKFs[i]->GetMapPointMatches();
+			#pragma omp parallel for
 			for(vector<MapPoint*>::iterator vit=vpMPs.begin(), vend=vpMPs.end(); vit!=vend; vit++)
 			{
 				// Using mnBALocalForKF we avoid redundance here, one MP can not be added several times to lLocalMapPoints
@@ -4058,12 +4108,14 @@ namespace ORB_SLAM3
 
 		std::vector<std::pair<MapPoint*, int>> pairs;
 		pairs.reserve(mLocalObs.size());
+		#pragma omp parallel for
 		for (auto itr = mLocalObs.begin(); itr != mLocalObs.end(); ++itr)
 			pairs.push_back(*itr);
 		sort(pairs.begin(), pairs.end(),sortByVal);
 
 		// Fixed Keyframes. Keyframes that see Local MapPoints but that are not Local Keyframes
 		int i=0;
+		#pragma omp parallel for
 		for(vector<pair<MapPoint*,int>>::iterator lit=pairs.begin(), lend=pairs.end(); lit!=lend; lit++, i++)
 		{
 			map<KeyFrame*,tuple<int,int>> observations = lit->first->GetObservations();
@@ -4100,6 +4152,7 @@ namespace ORB_SLAM3
 
 		// Set Local KeyFrame vertices
 		N=vpOptimizableKFs.size();
+		#pragma omp parallel for
 		for(int i=0; i<N; i++)
 		{
 			KeyFrame* pKFi = vpOptimizableKFs[i];
@@ -4128,6 +4181,7 @@ namespace ORB_SLAM3
 
 		// Set Local cov keyframes vertices
 		int Ncov=vpOptimizableCovKFs.size();
+		#pragma omp parallel for
 		for(int i=0; i<Ncov; i++)
 		{
 			KeyFrame* pKFi = vpOptimizableCovKFs[i];
@@ -4155,6 +4209,7 @@ namespace ORB_SLAM3
 		}
 
 		// Set Fixed KeyFrame vertices
+		#pragma omp parallel for
 		for(list<KeyFrame*>::iterator lit=lFixedKeyFrames.begin(), lend=lFixedKeyFrames.end(); lit!=lend; lit++)
 		{
 			KeyFrame* pKFi = *lit;
@@ -4184,6 +4239,7 @@ namespace ORB_SLAM3
 		vector<EdgeInertial*> vei(N,(EdgeInertial*)NULL);
 		vector<EdgeGyroRW*> vegr(N,(EdgeGyroRW*)NULL);
 		vector<EdgeAccRW*> vear(N,(EdgeAccRW*)NULL);
+		#pragma omp parallel for
 		for(int i=0;i<N;i++)
 		{
 			//cout << "inserting inertial edge " << i << endl;
@@ -4277,7 +4333,7 @@ namespace ORB_SLAM3
 		const float chi2Stereo2 = 7.815;
 
 		const unsigned long iniMPid = maxKFid*5;
-
+		#pragma omp parallel for
 		for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++)
 		{
 			MapPoint* pMP = *lit;
@@ -4295,6 +4351,7 @@ namespace ORB_SLAM3
 			const map<KeyFrame*,tuple<int,int>> observations = pMP->GetObservations();
 
 			// Create visual constraints
+			#pragma omp parallel for
 			for(map<KeyFrame*,tuple<int,int>>::const_iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
 			{
 				KeyFrame* pKFi = mit->first;
@@ -4395,6 +4452,7 @@ namespace ORB_SLAM3
 		}
 
 		// Stereo
+		#pragma omp parallel for
 		for(size_t i=0, iend=vpEdgesStereo.size(); i<iend;i++)
 		{
 			EdgeStereo* e = vpEdgesStereo[i];
@@ -4413,7 +4471,8 @@ namespace ORB_SLAM3
 		// Get Map Mutex and erase outliers
 		unique_lock<mutex> lock(pMap->mMutexMapUpdate);
 		if(!vToErase.empty())
-		{
+		{	
+			#pragma omp parallel for
 			for(size_t i=0;i<vToErase.size();i++)
 			{
 				KeyFrame* pKFi = vToErase[i].first;
@@ -4426,6 +4485,7 @@ namespace ORB_SLAM3
 
 		// Recover optimized data
 		//Keyframes
+		#pragma omp parallel for
 		for(int i=0; i<N; i++)
 		{
 			KeyFrame* pKFi = vpOptimizableKFs[i];
@@ -4449,7 +4509,7 @@ namespace ORB_SLAM3
 				pKFi->SetNewBias(IMU::Bias(b[3],b[4],b[5],b[0],b[1],b[2]));
 			}
 		}
-
+		#pragma omp parallel for
 		for(int i=0; i<Ncov; i++)
 		{
 			KeyFrame* pKFi = vpOptimizableCovKFs[i];
@@ -4475,6 +4535,7 @@ namespace ORB_SLAM3
 		}
 
 		//Points
+		#pragma omp parallel for
 		for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++)
 		{
 			MapPoint* pMP = *lit;
@@ -4540,7 +4601,7 @@ namespace ORB_SLAM3
 
 		{
 			unique_lock<mutex> lock(MapPoint::mGlobalMutex);
-
+			#pragma omp parallel for
 			for(int i=0; i<N; i++)
 			{
 				MapPoint* pMP = pFrame->mvpMapPoints[i];
@@ -4704,6 +4765,7 @@ namespace ORB_SLAM3
 		int nInliersMono = 0;
 		int nInliersStereo = 0;
 		int nInliers = 0;
+		#pragma omp parallel for
 		for(size_t it=0; it<4; it++)
 		{
 			optimizer.initializeOptimization(0);
@@ -4718,6 +4780,7 @@ namespace ORB_SLAM3
 			float chi2close = 1.5*chi2Mono[it];
 
 			// For monocular observations
+			#pragma omp parallel for
 			for(size_t i=0, iend=vpEdgesMono.size(); i<iend; i++)
 			{
 				EdgeMonoOnlyPose* e = vpEdgesMono[i];
@@ -4750,6 +4813,7 @@ namespace ORB_SLAM3
 			}
 
 			// For stereo observations
+			#pragma omp parallel for
 			for(size_t i=0, iend=vpEdgesStereo.size(); i<iend; i++)
 			{
 				EdgeStereoOnlyPose* e = vpEdgesStereo[i];
@@ -4798,6 +4862,7 @@ namespace ORB_SLAM3
 			const float chi2StereoOut = 24.f;
 			EdgeMonoOnlyPose* e1;
 			EdgeStereoOnlyPose* e2;
+			#pragma omp parallel for
 			for(size_t i=0, iend=vnIndexEdgeMono.size(); i<iend; i++)
 			{
 				const size_t idx = vnIndexEdgeMono[i];
@@ -4808,6 +4873,7 @@ namespace ORB_SLAM3
 				else
 					nBad++;
 			}
+			#pragma omp parallel for
 			for(size_t i=0, iend=vnIndexEdgeStereo.size(); i<iend; i++)
 			{
 				const size_t idx = vnIndexEdgeStereo[i];
@@ -4835,6 +4901,7 @@ namespace ORB_SLAM3
 		H.block<3,3>(12,12) += ear->GetHessian2();
 
 		int tot_in = 0, tot_out = 0;
+		#pragma omp parallel for
 		for(size_t i=0, iend=vpEdgesMono.size(); i<iend; i++)
 		{
 			EdgeMonoOnlyPose* e = vpEdgesMono[i];
@@ -4849,7 +4916,7 @@ namespace ORB_SLAM3
 			else
 				tot_out++;
 		}
-
+		#pragma omp parallel for
 		for(size_t i=0, iend=vpEdgesStereo.size(); i<iend; i++)
 		{
 			EdgeStereoOnlyPose* e = vpEdgesStereo[i];
@@ -4924,7 +4991,7 @@ namespace ORB_SLAM3
 
 		{
 			unique_lock<mutex> lock(MapPoint::mGlobalMutex);
-
+			#pragma omp parallel for
 			for(int i=0; i<N; i++)
 			{
 				MapPoint* pMP = pFrame->mvpMapPoints[i];
@@ -5103,6 +5170,7 @@ namespace ORB_SLAM3
 		int nInliersMono = 0;
 		int nInliersStereo = 0;
 		int nInliers=0;
+		#pragma omp parallel for
 		for(size_t it=0; it<4; it++)
 		{
 			optimizer.initializeOptimization(0);
@@ -5115,7 +5183,7 @@ namespace ORB_SLAM3
 			nInliersMono=0;
 			nInliersStereo=0;
 			float chi2close = 1.5*chi2Mono[it];
-
+			#pragma omp parallel for
 			for(size_t i=0, iend=vpEdgesMono.size(); i<iend; i++)
 			{
 				EdgeMonoOnlyPose* e = vpEdgesMono[i];
@@ -5147,7 +5215,7 @@ namespace ORB_SLAM3
 					e->setRobustKernel(0);
 
 			}
-
+			#pragma omp parallel for
 			for(size_t i=0, iend=vpEdgesStereo.size(); i<iend; i++)
 			{
 				EdgeStereoOnlyPose* e = vpEdgesStereo[i];
@@ -5195,6 +5263,7 @@ namespace ORB_SLAM3
 			const float chi2StereoOut = 24.f;
 			EdgeMonoOnlyPose* e1;
 			EdgeStereoOnlyPose* e2;
+			#pragma omp parallel for
 			for(size_t i=0, iend=vnIndexEdgeMono.size(); i<iend; i++)
 			{
 				const size_t idx = vnIndexEdgeMono[i];
@@ -5206,6 +5275,7 @@ namespace ORB_SLAM3
 					nBad++;
 
 			}
+			#pragma omp parallel for
 			for(size_t i=0, iend=vnIndexEdgeStereo.size(); i<iend; i++)
 			{
 				const size_t idx = vnIndexEdgeStereo[i];
@@ -5248,6 +5318,7 @@ namespace ORB_SLAM3
 		H.block<15,15>(0,0) += ep->GetHessian();
 
 		int tot_in = 0, tot_out = 0;
+		#pragma omp parallel for
 		for(size_t i=0, iend=vpEdgesMono.size(); i<iend; i++)
 		{
 			EdgeMonoOnlyPose* e = vpEdgesMono[i];
@@ -5262,7 +5333,7 @@ namespace ORB_SLAM3
 			else
 				tot_out++;
 		}
-
+		#pragma omp parallel for
 		for(size_t i=0, iend=vpEdgesStereo.size(); i<iend; i++)
 		{
 			EdgeStereoOnlyPose* e = vpEdgesStereo[i];
@@ -5317,6 +5388,7 @@ namespace ORB_SLAM3
 
 		const int minFeat = 100;
 		// Set KeyFrame vertices
+		#pragma omp parallel for
 		for(size_t i=0, iend=vpKFs.size(); i<iend;i++)
 		{
 			KeyFrame* pKF = vpKFs[i];
@@ -5365,6 +5437,7 @@ namespace ORB_SLAM3
 
 		// Set Loop edges
 		Edge4DoF* e_loop;
+		#pragma omp parallel for
 		for(map<KeyFrame *, set<KeyFrame *> >::const_iterator mit = LoopConnections.begin(), mend=LoopConnections.end(); mit!=mend; mit++)
 		{
 			KeyFrame* pKF = mit->first;
@@ -5398,6 +5471,7 @@ namespace ORB_SLAM3
 		}
 
 		// 1. Set normal edges
+		#pragma omp parallel for
 		for(size_t i=0, iend=vpKFs.size(); i<iend; i++)
 		{
 			KeyFrame* pKF = vpKFs[i];
@@ -5472,6 +5546,7 @@ namespace ORB_SLAM3
 
 			// 1.2 Loop edges
 			const set<KeyFrame*> sLoopEdges = pKF->GetLoopEdges();
+			#pragma omp parallel for
 			for(set<KeyFrame*>::const_iterator sit=sLoopEdges.begin(), send=sLoopEdges.end(); sit!=send; sit++)
 			{
 				KeyFrame* pLKF = *sit;
@@ -5502,6 +5577,7 @@ namespace ORB_SLAM3
 
 			// 1.3 Covisibility graph edges
 			const vector<KeyFrame*> vpConnectedKFs = pKF->GetCovisiblesByWeight(minFeat);
+			#pragma omp parallel for
 			for(vector<KeyFrame*>::const_iterator vit=vpConnectedKFs.begin(); vit!=vpConnectedKFs.end(); vit++)
 			{
 				KeyFrame* pKFn = *vit;
@@ -5541,7 +5617,7 @@ namespace ORB_SLAM3
 		optimizer.optimize(20);
 
 		unique_lock<mutex> lock(pMap->mMutexMapUpdate);
-
+		#pragma omp parallel for
 		// SE3 Pose Recovering. Sim3:[sR t;0 1] -> SE3:[R t/s;0 1]
 		for(size_t i=0, vpKFs_size=vpKFs.size();i<vpKFs_size;i++)
 		{
@@ -5561,7 +5637,7 @@ namespace ORB_SLAM3
 		}
 
 		// Correct points. Transform to "non-optimized" reference keyframe pose and transform back with optimized pose
-		
+		#pragma omp parallel for
 		for(size_t i=0, iend=vpMPs.size(); i<iend; i++)
 		{
 			MapPoint* pMP = vpMPs[i];
