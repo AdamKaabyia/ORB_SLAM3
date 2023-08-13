@@ -33,11 +33,19 @@ namespace ORB_SLAM3
 	}
 
 	void Optimizer::GlobalBundleAdjustemnt(Map* pMap, int nIterations, bool* pbStopFlag, const unsigned long nLoopKF, const bool bRobust){
+        
+		auto start = std::chrono::high_resolution_clock::now(); 		
+		
 		vector<KeyFrame*> vpKFs = pMap->GetAllKeyFrames();
 		vector<MapPoint*> vpMP = pMap->GetAllMapPoints();
 		BundleAdjustment(vpKFs,vpMP,nIterations,pbStopFlag, nLoopKF, bRobust);
-	}
+		
+		auto finish = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double> elapsed = finish - start;
+		std::cout << "void Optimizer::GlobalBundleAdjustemnt(Map* pMap, int nIterations, bool* pbStopFlag, const unsigned long nLoopKF, const bool bRobust)" << elapsed.count() << " s\n";
 
+	}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<MapPoint *> &vpMP,
 									 int nIterations, bool* pbStopFlag, const unsigned long nLoopKF, const bool bRobust)
@@ -1121,8 +1129,8 @@ namespace ORB_SLAM3
 
 	void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap, int& num_fixedKF, int& num_OptKF, int& num_MPs, int& num_edges)
 	{
-        //std::cout<<"Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap, int& num_fixedKF, int& num_OptKF, int& num_MPs, int& num_edges)"<<std::endl;
-  
+		auto start = std::chrono::high_resolution_clock::now(); 
+		
 		// Local KeyFrames: First Breath Search from Current Keyframe
 		list<KeyFrame*> lLocalKeyFrames;
 
@@ -1156,15 +1164,10 @@ namespace ORB_SLAM3
 			for(vector<MapPoint*>::iterator vit=vpMPs.begin(), vend=vpMPs.end(); vit!=vend; vit++)
 			{
 				MapPoint* pMP = *vit;
-				if(pMP)
-					if(!pMP->isBad() && pMP->GetMap() == pCurrentMap)
-					{
-						if(pMP->mnBALocalForKF!=pKF->mnId)
-						{
+				if ((pMP)&&(!pMP->isBad() && pMP->GetMap() == pCurrentMap)&&(pMP->mnBALocalForKF!=pKF->mnId)){
 							lLocalMapPoints.push_back(pMP);
 							pMP->mnBALocalForKF=pKF->mnId;
-						}
-					}
+				}	
 			}
 		}
 
@@ -1192,6 +1195,11 @@ namespace ORB_SLAM3
 		if(num_fixedKF == 0)
 		{
 			Verbose::PrintMess("LM-LBA: There are 0 fixed KF in the optimizations, LBA aborted", Verbose::VERBOSITY_NORMAL);
+	
+			auto finish = std::chrono::high_resolution_clock::now();
+			std::chrono::duration<double> elapsed = finish - start;
+			std::cout << "void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap, int& num_fixedKF, int& num_OptKF, int& num_MPs, int& num_edges)" << elapsed.count() << " s\n";
+
 			return;
 		}
 
@@ -1511,8 +1519,14 @@ namespace ORB_SLAM3
 		}
 
 		pMap->IncreaseChangeIndex();
+		
+		auto finish = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double> elapsed = finish - start;
+		std::cout << "void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap, int& num_fixedKF, int& num_OptKF, int& num_MPs, int& num_edges)" << elapsed.count() << " s\n";
+
 	}
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* pCurKF,
 										   const LoopClosing::KeyFrameAndPose &NonCorrectedSim3,
