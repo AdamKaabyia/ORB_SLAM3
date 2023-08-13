@@ -27,6 +27,7 @@
 
 namespace ORB_SLAM3
 {
+	
 	inline bool sortByVal(const pair<MapPoint*, int> &a, const pair<MapPoint*, int> &b){
 		return (a.second < b.second);
 	}
@@ -42,7 +43,7 @@ namespace ORB_SLAM3
 									 int nIterations, bool* pbStopFlag, const unsigned long nLoopKF, const bool bRobust)
 	{
         //std::cout<<"BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<MapPoint *> &vpMP,int nIterations, bool* pbStopFlag, const unsigned long nLoopKF,  const bool bRobust)"<<std::endl;
-             auto start = std::chrono::high_resolution_clock::now(); 
+        auto start = std::chrono::high_resolution_clock::now(); 
 
 
 		vector<bool> vbNotIncludedMP;
@@ -353,7 +354,7 @@ namespace ORB_SLAM3
 		auto finish = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<double> elapsed = finish - start;
 		std::cout << "BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<MapPoint *> &vpMP,int nIterations, bool* pbStopFlag, const unsigned long nLoopKF,  const bool bRobust) time: " << elapsed.count() << " s\n";
-		
+
 	}
 
 
@@ -361,7 +362,8 @@ namespace ORB_SLAM3
 	void Optimizer::FullInertialBA(Map *pMap, int its, const bool bFixLocal, const long unsigned int nLoopId, bool *pbStopFlag, bool bInit, float priorG, float priorA, Eigen::VectorXd *vSingVal, bool *bHess)
 	{
         //std::cout<<"FullInertialBA(Map *pMap, int its, const bool bFixLocal, const long unsigned int nLoopId, bool *pbStopFlag, bool bInit, float priorG, float priorA, Eigen::VectorXd *vSingVal, bool *bHess)"<<std::endl;
- 
+		auto start = std::chrono::high_resolution_clock::now(); 
+
 		long unsigned int maxKFid = pMap->GetMaxKFid();
 		const vector<KeyFrame*> vpKFs = pMap->GetAllKeyFrames();
 		const vector<MapPoint*> vpMPs = pMap->GetAllMapPoints();
@@ -437,7 +439,10 @@ namespace ORB_SLAM3
 		}
 
 		if((bFixLocal) && (nNonFixed<3)){
-				return;
+			auto finish = std::chrono::high_resolution_clock::now();
+			std::chrono::duration<double> elapsed = finish - start;
+			std::cout << "FullInertialBA(Map *pMap, int its, const bool bFixLocal, const long unsigned int nLoopId, bool *pbStopFlag, bool bInit, float priorG, float priorA, Eigen::VectorXd *vSingVal, bool *bHess)" << elapsed.count() << " s\n";
+			return;
 		}
 
 		// IMU links
@@ -689,9 +694,15 @@ namespace ORB_SLAM3
 			}
 		}
 
-		if(pbStopFlag)
-			if(*pbStopFlag)
-				return;
+		if(pbStopFlag &&*pbStopFlag)
+		{
+			auto finish = std::chrono::high_resolution_clock::now();
+			std::chrono::duration<double> elapsed = finish - start;
+			std::cout << "FullInertialBA(Map *pMap, int its, const bool bFixLocal, const long unsigned int nLoopId, bool *pbStopFlag, bool bInit, float priorG, float priorA, Eigen::VectorXd *vSingVal, bool *bHess)" << elapsed.count() << " s\n";
+			
+			return;
+		}
+		
 
 
 		optimizer.initializeOptimization();
@@ -783,13 +794,20 @@ namespace ORB_SLAM3
 		}
 
 		pMap->IncreaseChangeIndex();
+		
+		auto finish = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double> elapsed = finish - start;
+		std::cout << "FullInertialBA(Map *pMap, int its, const bool bFixLocal, const long unsigned int nLoopId, bool *pbStopFlag, bool bInit, float priorG, float priorA, Eigen::VectorXd *vSingVal, bool *bHess)" << elapsed.count() << " s\n";
+		
 	}
 
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	int Optimizer::PoseOptimization(Frame *pFrame)
 	{
         //std::cout<<"Optimizer::PoseOptimization(Frame *pFrame)"<<std::endl;
-  
+		auto start = std::chrono::high_resolution_clock::now(); 
+
+			
 		g2o::SparseOptimizer optimizer;
 		g2o::BlockSolver_6_3::LinearSolverType * linearSolver;
 
@@ -1091,9 +1109,15 @@ namespace ORB_SLAM3
 		Sophus::SE3<float> pose(SE3quat_recov.rotation().cast<float>(),
 				SE3quat_recov.translation().cast<float>());
 		pFrame->SetPose(pose);
-
+		
+			auto finish = std::chrono::high_resolution_clock::now();
+			std::chrono::duration<double> elapsed = finish - start;
+			std::cout << "Optimizer::PoseOptimization(Frame *pFrame)" << elapsed.count() << " s\n";
+		
 		return nInitialCorrespondences-nBad;
 	}
+	
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap, int& num_fixedKF, int& num_OptKF, int& num_MPs, int& num_edges)
 	{
