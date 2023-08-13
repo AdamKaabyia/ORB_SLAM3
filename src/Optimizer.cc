@@ -34,15 +34,11 @@ namespace ORB_SLAM3
 
 	void Optimizer::GlobalBundleAdjustemnt(Map* pMap, int nIterations, bool* pbStopFlag, const unsigned long nLoopKF, const bool bRobust){
         
-		auto start = std::chrono::high_resolution_clock::now(); 		
+		
 		
 		vector<KeyFrame*> vpKFs = pMap->GetAllKeyFrames();
 		vector<MapPoint*> vpMP = pMap->GetAllMapPoints();
 		BundleAdjustment(vpKFs,vpMP,nIterations,pbStopFlag, nLoopKF, bRobust);
-		
-		auto finish = std::chrono::high_resolution_clock::now();
-		std::chrono::duration<double> elapsed = finish - start;
-		std::cout << "void Optimizer::GlobalBundleAdjustemnt(Map* pMap, int nIterations, bool* pbStopFlag, const unsigned long nLoopKF, const bool bRobust)" << elapsed.count() << " s\n";
 
 	}
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -50,9 +46,6 @@ namespace ORB_SLAM3
 	void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<MapPoint *> &vpMP,
 									 int nIterations, bool* pbStopFlag, const unsigned long nLoopKF, const bool bRobust)
 	{
-        //std::cout<<"BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<MapPoint *> &vpMP,int nIterations, bool* pbStopFlag, const unsigned long nLoopKF,  const bool bRobust)"<<std::endl;
-        auto start = std::chrono::high_resolution_clock::now(); 
-
 
 		vector<bool> vbNotIncludedMP;
 		vbNotIncludedMP.resize(vpMP.size());
@@ -359,9 +352,6 @@ namespace ORB_SLAM3
 				pMP->mnBAGlobalForKF = nLoopKF;
 			}
 		}
-		auto finish = std::chrono::high_resolution_clock::now();
-		std::chrono::duration<double> elapsed = finish - start;
-		std::cout << "BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<MapPoint *> &vpMP,int nIterations, bool* pbStopFlag, const unsigned long nLoopKF,  const bool bRobust) time: " << elapsed.count() << " s\n";
 
 	}
 
@@ -369,9 +359,6 @@ namespace ORB_SLAM3
 
 	void Optimizer::FullInertialBA(Map *pMap, int its, const bool bFixLocal, const long unsigned int nLoopId, bool *pbStopFlag, bool bInit, float priorG, float priorA, Eigen::VectorXd *vSingVal, bool *bHess)
 	{
-        //std::cout<<"FullInertialBA(Map *pMap, int its, const bool bFixLocal, const long unsigned int nLoopId, bool *pbStopFlag, bool bInit, float priorG, float priorA, Eigen::VectorXd *vSingVal, bool *bHess)"<<std::endl;
-		auto start = std::chrono::high_resolution_clock::now(); 
-
 		long unsigned int maxKFid = pMap->GetMaxKFid();
 		const vector<KeyFrame*> vpKFs = pMap->GetAllKeyFrames();
 		const vector<MapPoint*> vpMPs = pMap->GetAllMapPoints();
@@ -447,9 +434,6 @@ namespace ORB_SLAM3
 		}
 
 		if((bFixLocal) && (nNonFixed<3)){
-			auto finish = std::chrono::high_resolution_clock::now();
-			std::chrono::duration<double> elapsed = finish - start;
-			std::cout << "FullInertialBA(Map *pMap, int its, const bool bFixLocal, const long unsigned int nLoopId, bool *pbStopFlag, bool bInit, float priorG, float priorA, Eigen::VectorXd *vSingVal, bool *bHess)" << elapsed.count() << " s\n";
 			return;
 		}
 
@@ -704,10 +688,7 @@ namespace ORB_SLAM3
 
 		if(pbStopFlag &&*pbStopFlag)
 		{
-			auto finish = std::chrono::high_resolution_clock::now();
-			std::chrono::duration<double> elapsed = finish - start;
-			std::cout << "FullInertialBA(Map *pMap, int its, const bool bFixLocal, const long unsigned int nLoopId, bool *pbStopFlag, bool bInit, float priorG, float priorA, Eigen::VectorXd *vSingVal, bool *bHess)" << elapsed.count() << " s\n";
-			
+	
 			return;
 		}
 		
@@ -803,18 +784,12 @@ namespace ORB_SLAM3
 
 		pMap->IncreaseChangeIndex();
 		
-		auto finish = std::chrono::high_resolution_clock::now();
-		std::chrono::duration<double> elapsed = finish - start;
-		std::cout << "FullInertialBA(Map *pMap, int its, const bool bFixLocal, const long unsigned int nLoopId, bool *pbStopFlag, bool bInit, float priorG, float priorA, Eigen::VectorXd *vSingVal, bool *bHess)" << elapsed.count() << " s\n";
-		
+			
 	}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	int Optimizer::PoseOptimization(Frame *pFrame)
 	{
-        //std::cout<<"Optimizer::PoseOptimization(Frame *pFrame)"<<std::endl;
-		auto start = std::chrono::high_resolution_clock::now(); 
-
 			
 		g2o::SparseOptimizer optimizer;
 		g2o::BlockSolver_6_3::LinearSolverType * linearSolver;
@@ -1118,10 +1093,7 @@ namespace ORB_SLAM3
 				SE3quat_recov.translation().cast<float>());
 		pFrame->SetPose(pose);
 		
-			auto finish = std::chrono::high_resolution_clock::now();
-			std::chrono::duration<double> elapsed = finish - start;
-			std::cout << "Optimizer::PoseOptimization(Frame *pFrame)" << elapsed.count() << " s\n";
-		
+
 		return nInitialCorrespondences-nBad;
 	}
 	
@@ -1129,7 +1101,6 @@ namespace ORB_SLAM3
 
 	void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap, int& num_fixedKF, int& num_OptKF, int& num_MPs, int& num_edges)
 	{
-		auto start = std::chrono::high_resolution_clock::now(); 
 		
 		// Local KeyFrames: First Breath Search from Current Keyframe
 		list<KeyFrame*> lLocalKeyFrames;
@@ -1196,10 +1167,6 @@ namespace ORB_SLAM3
 		{
 			Verbose::PrintMess("LM-LBA: There are 0 fixed KF in the optimizations, LBA aborted", Verbose::VERBOSITY_NORMAL);
 	
-			auto finish = std::chrono::high_resolution_clock::now();
-			std::chrono::duration<double> elapsed = finish - start;
-			std::cout << "void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap, int& num_fixedKF, int& num_OptKF, int& num_MPs, int& num_edges)" << elapsed.count() << " s\n";
-
 			return;
 		}
 
@@ -1520,9 +1487,6 @@ namespace ORB_SLAM3
 
 		pMap->IncreaseChangeIndex();
 		
-		auto finish = std::chrono::high_resolution_clock::now();
-		std::chrono::duration<double> elapsed = finish - start;
-		std::cout << "void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap, int& num_fixedKF, int& num_OptKF, int& num_MPs, int& num_edges)" << elapsed.count() << " s\n";
 
 	}
 
@@ -1534,9 +1498,7 @@ namespace ORB_SLAM3
 										   const map<KeyFrame *, set<KeyFrame *> > &LoopConnections, const bool &bFixScale)
 	{     
         //std::cout<<"OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* pCurKF,const LoopClosing::KeyFrameAndPose &NonCorrectedSim3,const LoopClosing::KeyFrameAndPose &CorrectedSim3,const map<KeyFrame *, set<KeyFrame *> > &LoopConnections, const bool &bFixScale)"<<std::endl;
-		
-		auto start = std::chrono::high_resolution_clock::now(); 
-	
+
 		// Setup optimizer
 		g2o::SparseOptimizer optimizer;
 		optimizer.setVerbose(false);
@@ -1822,10 +1784,6 @@ namespace ORB_SLAM3
 		// TODO Check this changeindex
 		pMap->IncreaseChangeIndex();
 		
-		auto finish = std::chrono::high_resolution_clock::now();
-		std::chrono::duration<double> elapsed = finish - start;
-		std::cout << "OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* pCurKF,const LoopClosing::KeyFrameAndPose &NonCorrectedSim3,const LoopClosing::KeyFrameAndPose &CorrectedSim3,const map<KeyFrame *, set<KeyFrame *> > &LoopConnections, const bool &bFixScale)" << elapsed.count() << " s\n";
-
 	}
 	
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1834,9 +1792,7 @@ namespace ORB_SLAM3
 										   vector<KeyFrame*> &vpNonFixedKFs, vector<MapPoint*> &vpNonCorrectedMPs)
 	{
         //std::cout<<"Optimizer::OptimizeEssentialGraph(KeyFrame* pCurKF, vector<KeyFrame*> &vpFixedKFs, vector<KeyFrame*> &vpFixedCorrectedKFs,vector<KeyFrame*> &vpNonFixedKFs, vector<MapPoint*> &vpNonCorrectedMPs)"<<std::endl;
-		
-		auto start = std::chrono::high_resolution_clock::now(); 
-			
+
 		Verbose::PrintMess("Opt_Essential: There are " + to_string(vpFixedKFs.size()) + " KFs fixed in the merged map", Verbose::VERBOSITY_DEBUG);
 		Verbose::PrintMess("Opt_Essential: There are " + to_string(vpFixedCorrectedKFs.size()) + " KFs fixed in the old map", Verbose::VERBOSITY_DEBUG);
 		Verbose::PrintMess("Opt_Essential: There are " + to_string(vpNonFixedKFs.size()) + " KFs non-fixed in the merged map", Verbose::VERBOSITY_DEBUG);
@@ -2168,9 +2124,6 @@ namespace ORB_SLAM3
 
 		}
 		
-		auto finish = std::chrono::high_resolution_clock::now();
-		std::chrono::duration<double> elapsed = finish - start;
-		std::cout << "Optimizer::OptimizeEssentialGraph(KeyFrame* pCurKF, vector<KeyFrame*> &vpFixedKFs, vector<KeyFrame*> &vpFixedCorrectedKFs,vector<KeyFrame*> &vpNonFixedKFs, vector<MapPoint*> &vpNonCorrectedMPs)" << elapsed.count() << " s\n";
 
 	}
 
