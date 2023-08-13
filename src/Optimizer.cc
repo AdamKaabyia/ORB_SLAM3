@@ -1534,7 +1534,9 @@ namespace ORB_SLAM3
 										   const map<KeyFrame *, set<KeyFrame *> > &LoopConnections, const bool &bFixScale)
 	{     
         //std::cout<<"OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* pCurKF,const LoopClosing::KeyFrameAndPose &NonCorrectedSim3,const LoopClosing::KeyFrameAndPose &CorrectedSim3,const map<KeyFrame *, set<KeyFrame *> > &LoopConnections, const bool &bFixScale)"<<std::endl;
- 
+		
+		auto start = std::chrono::high_resolution_clock::now(); 
+	
 		// Setup optimizer
 		g2o::SparseOptimizer optimizer;
 		optimizer.setVerbose(false);
@@ -1819,7 +1821,14 @@ namespace ORB_SLAM3
 
 		// TODO Check this changeindex
 		pMap->IncreaseChangeIndex();
+		
+		auto finish = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double> elapsed = finish - start;
+		std::cout << "OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* pCurKF,const LoopClosing::KeyFrameAndPose &NonCorrectedSim3,const LoopClosing::KeyFrameAndPose &CorrectedSim3,const map<KeyFrame *, set<KeyFrame *> > &LoopConnections, const bool &bFixScale)" << elapsed.count() << " s\n";
+
 	}
+	
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	void Optimizer::OptimizeEssentialGraph(KeyFrame* pCurKF, vector<KeyFrame*> &vpFixedKFs, vector<KeyFrame*> &vpFixedCorrectedKFs,
 										   vector<KeyFrame*> &vpNonFixedKFs, vector<MapPoint*> &vpNonCorrectedMPs)
