@@ -16,6 +16,7 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
+
 #include "MapDrawer.h"
 #include "MapPoint.h"
 #include "KeyFrame.h"
@@ -453,10 +454,11 @@ void MapDrawer::GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M, pangolin
     }
 
     for (int i = 0; i<4; i++) {
-        M.m[4*i] = Twc(0,i);
-        M.m[4*i+1] = Twc(1,i);
-        M.m[4*i+2] = Twc(2,i);
-        M.m[4*i+3] = Twc(3,i);
+        int j=i<<2;
+        M.m[j] = Twc(0,i);
+        M.m[j+1] = Twc(1,i);
+        M.m[j+2] = Twc(2,i);
+        M.m[j+3] = Twc(3,i);
     }
 
     MOw.SetIdentity();
