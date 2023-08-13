@@ -2,7 +2,7 @@
 #include "Optimizer.h"
 
 #include <omp.h>
-
+#include <chrono>
 #include <complex>
 
 #include <Eigen/StdVector>
@@ -42,7 +42,9 @@ namespace ORB_SLAM3
 									 int nIterations, bool* pbStopFlag, const unsigned long nLoopKF, const bool bRobust)
 	{
         //std::cout<<"BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<MapPoint *> &vpMP,int nIterations, bool* pbStopFlag, const unsigned long nLoopKF,  const bool bRobust)"<<std::endl;
-                                     
+             auto start = std::chrono::high_resolution_clock::now(); 
+
+
 		vector<bool> vbNotIncludedMP;
 		vbNotIncludedMP.resize(vpMP.size());
 
@@ -99,7 +101,6 @@ namespace ORB_SLAM3
 		size_t vpKFs_size = vpKFs.size();
 		#pragma omp parallel for
 		for(size_t i=0; i<vpKFs_size; i++){
-		
 			KeyFrame* pKF = vpKFs[i];
 			if(pKF->isBad())
 				continue;
@@ -349,6 +350,10 @@ namespace ORB_SLAM3
 				pMP->mnBAGlobalForKF = nLoopKF;
 			}
 		}
+		auto finish = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double> elapsed = finish - start;
+		std::cout << "BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<MapPoint *> &vpMP,int nIterations, bool* pbStopFlag, const unsigned long nLoopKF,  const bool bRobust) time: " << elapsed.count() << " s\n";
+		
 	}
 
 
