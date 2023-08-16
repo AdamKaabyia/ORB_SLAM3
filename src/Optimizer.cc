@@ -1127,10 +1127,8 @@ namespace ORB_SLAM3
 		for(list<KeyFrame*>::iterator lit=lLocalKeyFrames.begin() , lend=lLocalKeyFrames.end(); lit!=lend; lit++)
 		{
 			KeyFrame* pKFi = *lit;
-			if(pKFi->mnId==pMap->GetInitKFid())
-			{
-				num_fixedKF = 1;
-			}
+			num_fixedKF = (pKFi->mnId==pMap->GetInitKFid()) ? 1 : num_fixedKF;
+			
 			vector<MapPoint*> vpMPs = pKFi->GetMapPointMatches();
 			for(vector<MapPoint*>::iterator vit=vpMPs.begin(), vend=vpMPs.end(); vit!=vend; vit++)
 			{
@@ -1391,9 +1389,7 @@ namespace ORB_SLAM3
 		}
 		num_edges = nEdges;
 
-		if(pbStopFlag)
-			if(*pbStopFlag)
-				return;
+		if(pbStopFlag && *pbStopFlag){return;}
 
 		optimizer.initializeOptimization();
 		optimizer.optimize(10);
