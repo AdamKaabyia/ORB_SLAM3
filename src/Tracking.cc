@@ -3072,7 +3072,7 @@ bool Tracking::NeedNewKeyFrame()
 			}else{
 				return false;
 			}
-		}
+		
     }
 
 
@@ -3119,8 +3119,6 @@ bool Tracking::NeedNewKeyFrame()
         //Verbose::PrintMess("[NEEDNEWKF]-> closed points: " + to_string(nTrackedClose) + "; non tracked closed points: " + to_string(nNonTrackedClose), Verbose::VERBOSITY_NORMAL);// Verbose::VERBOSITY_DEBUG);
     }
 
-    bool bNeedToInsertClose;
-    bNeedToInsertClose = (nTrackedClose<100) && (nNonTrackedClose>70);
 
     // Thresholds
 ///////////////////////////////////////////////////////////////
@@ -3143,8 +3141,7 @@ bool Tracking::NeedNewKeyFrame()
     }
 
     // Adjust Depth-Related Criteria for Stereo/RGB-D Data
-    bool bNeedToInsertClose;
-    bNeedToInsertClose = (nTrackedClose<110) && (nNonTrackedClose>80); // Previously (nTrackedClose<100) && (nNonTrackedClose>70)
+    bool bNeedToInsertClose = (nTrackedClose<110) && (nNonTrackedClose>80); // Previously (nTrackedClose<100) && (nNonTrackedClose>70)
 
     // Modify Time-Based Conditions for IMU Data
     bool c3 = false;
