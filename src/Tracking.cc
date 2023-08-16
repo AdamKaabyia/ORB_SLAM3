@@ -3130,6 +3130,7 @@ bool Tracking::NeedNewKeyFrame()
     if(mSensor==System::MONOCULAR)
         thRefRatio = 0.95f; // Previously 0.9f
 
+
     if(mpCamera2) thRefRatio = 0.8f; // Previously 0.75f
 
     if(mSensor==System::IMU_MONOCULAR)
@@ -3142,6 +3143,17 @@ bool Tracking::NeedNewKeyFrame()
 
     // Adjust Depth-Related Criteria for Stereo/RGB-D Data
     bool bNeedToInsertClose = (nTrackedClose<110) && (nNonTrackedClose>80); // Previously (nTrackedClose<100) && (nNonTrackedClose>70)
+
+
+    // Condition 1a: More than "MaxFrames" have passed from last keyframe insertion
+    const bool c1a = mCurrentFrame.mnId>=mnLastKeyFrameId+mMaxFrames;
+    // Condition 1b: More than "MinFrames" have passed and Local Mapping is idle
+    const bool c1b = ((mCurrentFrame.mnId>=mnLastKeyFrameId+mMinFrames) && bLocalMappingIdle); //mpLocalMapper->KeyframesInQueue() < 2);
+    //Condition 1c: tracking is weak
+    const bool c1c = mSensor!=System::MONOCULAR && mSensor!=System::IMU_MONOCULAR && mSensor!=System::IMU_STEREO && mSensor!=System::IMU_RGBD && (mnMatchesInliers<nRefMatches*0.25 || bNeedToInsertClose) ;
+    // Condition 2: Few tracked points compared to reference keyframe. Lots of visual odometry compared to map matches.
+    const bool c2 = (((mnMatchesInliers<nRefMatches*thRefRatio || bNeedToInsertClose)) && mnMatchesInliers>15);
+
 
     // Modify Time-Based Conditions for IMU Data
     bool c3 = false;
