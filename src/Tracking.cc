@@ -3065,23 +3065,19 @@ bool Tracking::NeedNewKeyFrame()
 {
     if((mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD) && !mpAtlas->GetCurrentMap()->isImuInitialized())
     {
-        if (mSensor == System::IMU_MONOCULAR && (mCurrentFrame.mTimeStamp-mpLastKeyFrame->mTimeStamp)>=0.25)
-            return true;
-        else if ((mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD) && (mCurrentFrame.mTimeStamp-mpLastKeyFrame->mTimeStamp)>=0.25)
-            return true;
-        else
-            return false;
+        if ((mSensor == System::IMU_MONOCULAR && (mCurrentFrame.mTimeStamp-mpLastKeyFrame->mTimeStamp)>=0.25)
+            ||((mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD) && (mCurrentFrame.mTimeStamp-mpLastKeyFrame->mTimeStamp)>=0.25))
+			{
+				return true;
+			}else{
+				return false;
+			}
+		
     }
 
-    if(mbOnlyTracking)
-        return false;
 
     // If Local Mapping is freezed by a Loop Closure do not insert keyframes
-    if(mpLocalMapper->isStopped() || mpLocalMapper->stopRequested()) {
-        /*if(mSensor == System::MONOCULAR)
-        {
-            std::cout << "NeedNewKeyFrame: localmap stopped" << std::endl;
-        }*/
+    if((mbOnlyTracking) || mpLocalMapper->isStopped() || mpLocalMapper->stopRequested()) {
         return false;
     }
 
@@ -3123,34 +3119,31 @@ bool Tracking::NeedNewKeyFrame()
         //Verbose::PrintMess("[NEEDNEWKF]-> closed points: " + to_string(nTrackedClose) + "; non tracked closed points: " + to_string(nNonTrackedClose), Verbose::VERBOSITY_NORMAL);// Verbose::VERBOSITY_DEBUG);
     }
 
-    bool bNeedToInsertClose;
-    bNeedToInsertClose = (nTrackedClose<100) && (nNonTrackedClose>70);
 
     // Thresholds
-    float thRefRatio = 0.75f;
-    if(nKFs<2)
-        thRefRatio = 0.4f;
+///////////////////////////////////////////////////////////////
+   float thRefRatio = 0.85f; // Previously 0.75f
 
-    /*int nClosedPoints = nTrackedClose + nNonTrackedClose;
-    const int thStereoClosedPoints = 15;
-    if(nClosedPoints < thStereoClosedPoints && (mSensor==System::STEREO || mSensor==System::IMU_STEREO))
-    {
-        //Pseudo-monocular, there are not enough close points to be confident about the stereo observations.
-        thRefRatio = 0.9f;
-    }*/
+    if(nKFs<2)
+        thRefRatio = 0.5f; // Previously 0.4f
 
     if(mSensor==System::MONOCULAR)
-        thRefRatio = 0.9f;
+        thRefRatio = 0.95f; // Previously 0.9f
 
-    if(mpCamera2) thRefRatio = 0.75f;
+
+    if(mpCamera2) thRefRatio = 0.8f; // Previously 0.75f
 
     if(mSensor==System::IMU_MONOCULAR)
     {
-        if(mnMatchesInliers>350) // Points tracked from the local map
-            thRefRatio = 0.75f;
+        if(mnMatchesInliers>350) 
+            thRefRatio = 0.8f; // Previously 0.75f
         else
-            thRefRatio = 0.90f;
+            thRefRatio = 0.95f; // Previously 0.90f
     }
+
+    // Adjust Depth-Related Criteria for Stereo/RGB-D Data
+    bool bNeedToInsertClose = (nTrackedClose<110) && (nNonTrackedClose>80); // Previously (nTrackedClose<100) && (nNonTrackedClose>70)
+
 
     // Condition 1a: More than "MaxFrames" have passed from last keyframe insertion
     const bool c1a = mCurrentFrame.mnId>=mnLastKeyFrameId+mMaxFrames;
@@ -3161,23 +3154,23 @@ bool Tracking::NeedNewKeyFrame()
     // Condition 2: Few tracked points compared to reference keyframe. Lots of visual odometry compared to map matches.
     const bool c2 = (((mnMatchesInliers<nRefMatches*thRefRatio || bNeedToInsertClose)) && mnMatchesInliers>15);
 
-    //std::cout << "NeedNewKF: c1a=" << c1a << "; c1b=" << c1b << "; c1c=" << c1c << "; c2=" << c2 << std::endl;
-    // Temporal condition for Inertial cases
+
+    // Modify Time-Based Conditions for IMU Data
     bool c3 = false;
     if(mpLastKeyFrame)
     {
         if (mSensor==System::IMU_MONOCULAR)
         {
-            if ((mCurrentFrame.mTimeStamp-mpLastKeyFrame->mTimeStamp)>=0.5)
+            if ((mCurrentFrame.mTimeStamp-mpLastKeyFrame->mTimeStamp)>=0.6) // Previously 0.5
                 c3 = true;
         }
         else if (mSensor==System::IMU_STEREO || mSensor == System::IMU_RGBD)
         {
-            if ((mCurrentFrame.mTimeStamp-mpLastKeyFrame->mTimeStamp)>=0.5)
+            if ((mCurrentFrame.mTimeStamp-mpLastKeyFrame->mTimeStamp)>=0.6) // Previously 0.5
                 c3 = true;
         }
     }
-
+//////////////////////////////////////////////////////////////
     bool c4 = false;
     if ((((mnMatchesInliers<75) && (mnMatchesInliers>15)) || mState==RECENTLY_LOST) && (mSensor == System::IMU_MONOCULAR)) // MODIFICATION_2, originally ((((mnMatchesInliers<75) && (mnMatchesInliers>15)) || mState==RECENTLY_LOST) && ((mSensor == System::IMU_MONOCULAR)))
         c4=true;
