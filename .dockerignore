@@ -1,0 +1,90 @@
+# ==========================================
+# Docker Ignore for ORB-SLAM3 Container
+# Excludes ~10GB of unnecessary data
+# ==========================================
+
+# === LARGE DATASETS (9.2GB) ===
+# These will be mounted at runtime, not built into image
+datasets/
+*.bag
+*.rosbag
+
+# === BUILD ARTIFACTS ===
+# Always build fresh in container
+build/
+**/build/
+**/CMakeFiles/
+**/*.o
+**/*.so
+**/*.a
+lib/
+bin/
+
+# === GIT METADATA ===
+.git/
+.gitignore
+.gitmodules
+
+# === DOCUMENTATION & TUTORIALS ===
+README*.md
+*.pdf
+Changelog.md
+Dependencies.md
+LICENSE
+
+# === LEGACY & EXAMPLES (673MB) ===
+# Old ROS examples not needed for headless benchmarking
+Examples_old/
+
+# === EVALUATION TOOLS (51MB) ===
+# Not needed for core SLAM functionality
+evaluation/
+
+# === DEVELOPMENT TOOLS ===
+# IDE configurations
+.vscode/
+.idea/
+*.code-workspace
+
+# === PLATFORM-SPECIFIC SCRIPTS ===
+# Windows scripts not needed in Linux containers
+*.ps1
+windows-dev.ps1
+
+# === ORCHESTRATION SCRIPTS ===
+# Python automation scripts don't need to be in core container
+orbslam3_cli.py
+orbslam3_runner.py
+orbslam3_benchmark_ui.py
+results_dashboard.py
+euroc_dataset_scraper.py
+cross-platform-dev.py
+container-dev.sh
+
+# === RESULTS & LOGS ===
+benchmark_results/
+results/
+logs/
+*.log
+*.json
+
+# === TEMPORARY FILES ===
+*.tmp
+*.temp
+*~
+.DS_Store
+Thumbs.db
+
+# === LARGE BINARY FILES ===
+*.zip
+*.tar.gz
+*.tgz
+
+# Keep only essential ORB-SLAM3 core files:
+# - src/ (1.1MB)
+# - include/ (256KB)
+# - Thirdparty/ (5.1MB)
+# - Vocabulary/ (180MB)
+# - Examples/ (some parts)
+# - CMakeLists.txt
+# - build.sh

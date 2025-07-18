@@ -1,0 +1,23 @@
+# Version control
+.git
+.gitignore
+
+# Build artifacts
+build/
+*/build/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Documentation
+*.md
+README.md
+Calibration_Tutorial.pdf
+
+# Temporary files
+*.tmp
+*.log

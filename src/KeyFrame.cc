@@ -16,7 +16,6 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include "KeyFrame.h"
 #include "Converter.h"
 #include "ImuTypes.h"
@@ -450,7 +449,7 @@ void KeyFrame::UpdateConnections(bool upParent)
     sort(vPairs.begin(),vPairs.end());
     list<KeyFrame*> lKFs;
     list<int> lWs;
-    for(size_t i=0,vPairs_size=vPairs.size() ; i<vPairs_size;i++)
+    for(size_t i=0; i<vPairs.size();i++)
     {
         lKFs.push_front(vPairs[i].second);
         lWs.push_front(vPairs[i].first);

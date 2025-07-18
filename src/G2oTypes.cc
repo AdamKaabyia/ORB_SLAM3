@@ -16,7 +16,6 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include "G2oTypes.h"
 #include "ImuTypes.h"
 #include "Converter.h"
@@ -157,11 +156,10 @@ void ImuCamPose::SetParam(const std::vector<Eigen::Matrix3d> &_Rcw, const std::v
     Rcb.resize(num_cams);
     tcb.resize(num_cams);
 
-    int tcb_size = tcb.size(); 
-    for(int i=0; i<tcb_size; i++)
+    for(int i=0; i<tcb.size(); i++)
     {
-        Rcb[i]= Rbc[i].transpose();
-        tcb[i] = -Rcb[i] * tbc[i];
+        Rcb[i] = Rbc[i].transpose();
+        tcb[i] = -Rcb[i]*tbc[i];
     }
     Rwb = Rcw[0].transpose()*Rcb[0];
     twb = Rcw[0].transpose()*(tcb[0]-tcw[0]);
@@ -212,8 +210,8 @@ void ImuCamPose::Update(const double *pu)
     // Update camera poses
     const Eigen::Matrix3d Rbw = Rwb.transpose();
     const Eigen::Vector3d tbw = -Rbw * twb;
-    int pCamera_size = pCamera.size(); 
-    for(int i=0; i<pCamera_size; i++)
+
+    for(int i=0; i<pCamera.size(); i++)
     {
         Rcw[i] = Rcb[i] * Rbw;
         tcw[i] = Rcb[i] * tbw + tcb[i];
@@ -250,11 +248,10 @@ void ImuCamPose::UpdateW(const double *pu)
     const Eigen::Matrix3d Rbw = Rwb.transpose();
     const Eigen::Vector3d tbw = -Rbw * twb;
 
-    int pCamera_size = pCamera.size(); 
-    for(int i=0; i<pCamera_size; i++)
+    for(int i=0; i<pCamera.size(); i++)
     {
-        Rcw[i] = Rcb[i]* Rbw;
-        tcw[i] = Rcb[i] * tbw + tcb[i];
+        Rcw[i] = Rcb[i] * Rbw;
+        tcw[i] = Rcb[i] * tbw+tcb[i];
     }
 }
 
@@ -279,42 +276,24 @@ bool VertexPose::read(std::istream& is)
     const int num_cams = _estimate.Rbc.size();
     for(int idx = 0; idx<num_cams; idx++)
     {
-        
-        is >> Rcw[idx](0,0);
-        is >> Rcw[idx](0,1);
-        is >> Rcw[idx](0,2);
-        
-        is >> Rcw[idx](1,0);
-        is >> Rcw[idx](1,1);
-        is >> Rcw[idx](1,2);
-        
-        is >> Rcw[idx](2,0);
-        is >> Rcw[idx](2,1);
-        is >> Rcw[idx](2,2);
-        
-        is >> tcw[idx](0);
-        is >> tcw[idx](1);
-        is >> tcw[idx](2);
+        for (int i=0; i<3; i++){
+            for (int j=0; j<3; j++)
+                is >> Rcw[idx](i,j);
+        }
+        for (int i=0; i<3; i++){
+            is >> tcw[idx](i);
+        }
 
-        is >> Rbc[idx](0,0);
-        is >> Rbc[idx](0,1);
-        is >> Rbc[idx](0,2);
-        
-        is >> Rbc[idx](1,0);
-        is >> Rbc[idx](1,1);
-        is >> Rbc[idx](1,2);
-        
-        is >> Rbc[idx](2,0);
-        is >> Rbc[idx](2,1);
-        is >> Rbc[idx](2,2);
+        for (int i=0; i<3; i++){
+            for (int j=0; j<3; j++)
+                is >> Rbc[idx](i,j);
+        }
+        for (int i=0; i<3; i++){
+            is >> tbc[idx](i);
+        }
 
-        is >> tbc[idx](0);
-        is >> tbc[idx](1);
-        is >> tbc[idx](2);
-        
         float nextParam;
-        size_t  estimate_pCamera_idx_size =  _estimate.pCamera[idx]->size(); 
-        for(size_t i = 0; i < estimate_pCamera_idx_size ; i++){
+        for(size_t i = 0; i < _estimate.pCamera[idx]->size(); i++){
             is >> nextParam;
             _estimate.pCamera[idx]->setParameter(nextParam,i);
         }
@@ -340,43 +319,23 @@ bool VertexPose::write(std::ostream& os) const
 
     for(int idx = 0; idx<num_cams; idx++)
     {
+        for (int i=0; i<3; i++){
+            for (int j=0; j<3; j++)
+                os << Rcw[idx](i,j) << " ";
+        }
+        for (int i=0; i<3; i++){
+            os << tcw[idx](i) << " ";
+        }
 
-        os << Rcw[idx](0,0) << " ";
-        os << Rcw[idx](0,1) << " ";
-        os << Rcw[idx](0,2) << " ";
-        
-        os << Rcw[idx](1,0) << " ";
-        os << Rcw[idx](1,1) << " ";
-        os << Rcw[idx](1,2) << " ";
-        
-        os << Rcw[idx](2,0) << " ";
-        os << Rcw[idx](2,1) << " ";
-        os << Rcw[idx](2,2) << " ";                
-                
+        for (int i=0; i<3; i++){
+            for (int j=0; j<3; j++)
+                os << Rbc[idx](i,j) << " ";
+        }
+        for (int i=0; i<3; i++){
+            os << tbc[idx](i) << " ";
+        }
 
-        os << tcw[idx](0) << " ";
-        os << tcw[idx](1) << " ";
-        os << tcw[idx](2) << " ";
-
-
-        os << Rbc[idx](0,0) << " ";
-        os << Rbc[idx](0,1) << " ";
-        os << Rbc[idx](0,2) << " ";
-        
-        os << Rbc[idx](1,0) << " ";
-        os << Rbc[idx](1,1) << " ";
-        os << Rbc[idx](1,2) << " ";
-        
-        os << Rbc[idx](2,0) << " ";
-        os << Rbc[idx](2,1) << " ";
-        os << Rbc[idx](2,2) << " ";                
-  
-
-        os << tbc[idx](0) << " ";
-        os << tbc[idx](1) << " ";
-        os << tbc[idx](2) << " ";
-        size_t  estimate_pCamera_idx_size =  _estimate.pCamera[idx]->size(); 
-        for(size_t i = 0; i < estimate_pCamera_idx_size ; i++){
+        for(size_t i = 0; i < _estimate.pCamera[idx]->size(); i++){
             os << _estimate.pCamera[idx]->getParameter(i) << " ";
         }
     }

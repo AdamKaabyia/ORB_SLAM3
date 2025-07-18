@@ -1,0 +1,52 @@
+# Upstream ORB-SLAM3 Baseline Container
+# Basic Alpine setup (no optimizations)
+FROM alpine:latest
+
+LABEL description="Upstream ORB-SLAM3 baseline for comparison" \
+      version="upstream-baseline"
+
+# Latest Alpine packages (basic setup, no optimizations)
+RUN apk update && apk upgrade && \
+    apk add --no-cache \
+        cmake \
+        make \
+        gcc \
+        g++ \
+        git \
+        pkgconf \
+        wget \
+        unzip \
+        python3 \
+        py3-pip \
+        eigen-dev \
+        musl-dev \
+        linux-headers \
+        boost-dev \
+        opencv-dev
+
+# Set working directory
+WORKDIR /opt/orb-slam3
+
+# Copy source code (no git clone to avoid network issues)
+COPY . .
+
+# Basic environment with latest compiler support (no optimizations)
+ENV CXXFLAGS="-Wno-deprecated-declarations -fpermissive -std=c++17"
+ENV CFLAGS=""
+
+# Build with basic approach (no optimizations)
+RUN chmod +x build.sh && \
+    echo "Building upstream ORB-SLAM3 with basic setup..." && \
+    ./build.sh
+
+# Create user (Alpine style)
+RUN adduser -D -s /bin/bash orbdev && \
+    chown -R orbdev:orbdev /opt/orb-slam3
+
+USER orbdev
+
+# Set environment
+ENV LD_LIBRARY_PATH=/opt/orb-slam3/lib:$LD_LIBRARY_PATH
+ENV PATH=/opt/orb-slam3/Examples/Monocular:/opt/orb-slam3/Examples/Stereo:/opt/orb-slam3/Examples/RGB-D:$PATH
+
+CMD ["/bin/bash"]
