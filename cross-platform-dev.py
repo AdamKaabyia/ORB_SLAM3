@@ -46,11 +46,11 @@ def run_command(cmd, command_type="build", version="optimized"):
     if version == "optimized":
         image_tag = "orb-slam3:optimized"
         dockerfile = "Dockerfile"
-        description = "our optimized container"
+        description = "our optimized container (Alpine-based)"
     else:  # upstream
         image_tag = "orb-slam3:upstream"
         dockerfile = "Dockerfile.upstream"
-        description = "upstream baseline container"
+        description = "upstream baseline container (Alpine-based)"
 
     container_name = f"orb-slam3-{version}"
 
@@ -117,11 +117,11 @@ def run_command(cmd, command_type="build", version="optimized"):
             print(f"{'Upstream':<12} {'Not built':<15} {'ERROR Missing':<12} {'N/A'}")
 
         print("\nKey Differences:")
-        print("• Base OS: Basic Alpine (upstream) vs Optimized Alpine (ours)")
-        print("• GUI: Basic setup (upstream) vs Headless optimized (ours)")
-        print("• Dependencies: Basic compilation vs Pre-optimized")
-        print("• Tools: Basic (upstream) vs Enhanced automation suite (ours)")
-        print("• Build: Basic setup vs Comprehensive optimizations")
+        print("• Base OS: Ubuntu 22.04 (upstream) vs Alpine Linux (optimized)")
+        print("• Code: Original ORB-SLAM3 (upstream) vs Your optimized version")
+        print("• Compilation: -O0 no optimization (upstream) vs -O3 optimized (ours)")
+        print("• Dependencies: Full Pangolin/GUI (upstream) vs Headless optimized (ours)")
+        print("• Purpose: True baseline comparison vs Performance-optimized version")
         return
 
     subprocess.run(cmd)

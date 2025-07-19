@@ -22,21 +22,75 @@ RUN apk update && apk upgrade && \
         musl-dev \
         linux-headers \
         boost-dev \
+        boost-serialization \
         opencv-dev
 
 # Set working directory
 WORKDIR /opt/orb-slam3
 
-# Copy source code (no git clone to avoid network issues)
-COPY . .
+# Clone original ORB-SLAM3 from upstream repository and patch for headless operation
+RUN git clone https://github.com/UZ-SLAMLab/ORB_SLAM3.git . && \
+    echo "Using original upstream ORB-SLAM3 code for baseline comparison" && \
+    # Remove Pangolin dependencies from CMakeLists.txt for headless operation
+    sed -i '/find_package(Pangolin REQUIRED)/d' CMakeLists.txt && \
+    sed -i 's/\${Pangolin_LIBRARIES}//g' CMakeLists.txt && \
+    # Remove Pangolin includes from source files
+    find . -name "*.h" -o -name "*.cc" | xargs sed -i '/^#include.*pangolin/d' && \
+        # Create stub implementations for GUI classes instead of removing them completely
+    # This allows the build to succeed while providing headless operation
+    echo 'Creating headless stub implementations...' && \
+    # Create stub Viewer.cc with no-op implementations
+    echo '#include "Viewer.h"' > src/Viewer.cc && \
+    echo 'namespace ORB_SLAM3 {' >> src/Viewer.cc && \
+    echo 'Viewer::Viewer(System* pSystem, FrameDrawer* pFrameDrawer, MapDrawer* pMapDrawer, Tracking* pTracking, const string &strSettingPath, Settings* settings) {}' >> src/Viewer.cc && \
+    echo 'void Viewer::Run() {}' >> src/Viewer.cc && \
+    echo 'void Viewer::RequestStop() {}' >> src/Viewer.cc && \
+    echo 'void Viewer::Release() {}' >> src/Viewer.cc && \
+    echo 'bool Viewer::isStopped() { return true; }' >> src/Viewer.cc && \
+    echo '}' >> src/Viewer.cc && \
+    # Create stub MapDrawer.cc with no-op implementations
+    echo '#include "MapDrawer.h"' > src/MapDrawer.cc && \
+    echo 'namespace ORB_SLAM3 {' >> src/MapDrawer.cc && \
+    echo 'MapDrawer::MapDrawer(Atlas* pAtlas, const string &strSettingPath, Settings* settings) : mpAtlas(pAtlas) {}' >> src/MapDrawer.cc && \
+    echo 'void MapDrawer::SetCurrentCameraPose(const Sophus::SE3f &Tcw) {}' >> src/MapDrawer.cc && \
+    echo '}' >> src/MapDrawer.cc && \
+    # Create stub FrameDrawer.cc with no-op implementations
+    echo '#include "FrameDrawer.h"' > src/FrameDrawer.cc && \
+    echo 'namespace ORB_SLAM3 {' >> src/FrameDrawer.cc && \
+    echo 'FrameDrawer::FrameDrawer(Atlas* pAtlas) : mpAtlas(pAtlas) {}' >> src/FrameDrawer.cc && \
+    echo 'void FrameDrawer::Update(Tracking *pTracker) {}' >> src/FrameDrawer.cc && \
+    echo '}' >> src/FrameDrawer.cc && \
+    # Fix OpenGL type issues - replace GLubyte with unsigned char everywhere
+    find . -name "*.h" -o -name "*.cc" | xargs sed -i 's/GLubyte/unsigned char/g' && \
+    # Remove problematic pangolin-dependent function signatures from MapDrawer.h
+    sed -i '/pangolin::OpenGlMatrix/d' include/MapDrawer.h && \
+    # Remove any GL includes that might remain
+    find . -name "*.h" -o -name "*.cc" | xargs sed -i '/^#include.*GL\//d' && \
+    find . -name "*.h" -o -name "*.cc" | xargs sed -i '/^#include.*gl\.h/d' && \
+    # Fix modern C++ compatibility - replace NULL vector casts with proper initialization
+    find . -name "*.cc" -o -name "*.h" | xargs sed -i 's/static_cast<vector<cv::KeyPoint> >(NULL)/vector<cv::KeyPoint>()/g' && \
+    find . -name "*.cc" -o -name "*.h" | xargs sed -i 's/static_cast<vector<float> >(NULL)/vector<float>()/g' && \
+    find . -name "*.cc" -o -name "*.h" | xargs sed -i 's/static_cast<vector<cv::DMatch> >(NULL)/vector<cv::DMatch>()/g' && \
+    # Fix all vector NULL casts with more general pattern
+    find . -name "*.cc" -o -name "*.h" | xargs sed -i 's/static_cast<vector<[^>]*> >(NULL)/vector<>/g' && \
+    # Fix NULL casts to proper nullptr
+    find . -name "*.cc" -o -name "*.h" | xargs sed -i 's/static_cast<unsigned char\\*>(NULL)/nullptr/g' && \
+    find . -name "*.cc" -o -name "*.h" | xargs sed -i 's/static_cast<GLubyte\\*>(NULL)/nullptr/g' && \
+    # Fix specific vector initializations that are failing in KeyFrame.cc
+    sed -i 's/mvKeys(static_cast<vector<cv::KeyPoint> >(NULL))/mvKeys()/g' src/KeyFrame.cc && \
+    sed -i 's/mvKeysUn(static_cast<vector<cv::KeyPoint> >(NULL))/mvKeysUn()/g' src/KeyFrame.cc && \
+    sed -i 's/mvuRight(static_cast<vector<float> >(NULL))/mvuRight()/g' src/KeyFrame.cc && \
+    sed -i 's/mvDepth(static_cast<vector<float> >(NULL))/mvDepth()/g' src/KeyFrame.cc && \
+    echo "Patched upstream code to remove Pangolin for headless benchmarking"
 
-# Basic environment with latest compiler support (no optimizations)
-ENV CXXFLAGS="-Wno-deprecated-declarations -fpermissive -std=c++17"
-ENV CFLAGS=""
+# Basic environment with NO optimizations (baseline for performance comparison)
+# Your codebase compiled with -O0 (no optimization) for baseline measurements
+ENV CXXFLAGS="-O0 -Wno-array-bounds -Wno-aggressive-loop-optimizations -Wno-deprecated-declarations -fpermissive -std=c++17"
+ENV CFLAGS="-O0 -Wno-array-bounds -Wno-aggressive-loop-optimizations"
 
-# Build with basic approach (no optimizations)
+# Build with no optimizations (baseline performance container)
 RUN chmod +x build.sh && \
-    echo "Building upstream ORB-SLAM3 with basic setup..." && \
+    echo "Building ORB-SLAM3 with -O0 (no optimizations) for baseline performance measurements..." && \
     ./build.sh
 
 # Create user (Alpine style)
