@@ -163,6 +163,26 @@ class ORBSlam3CLI:
             else:
                 print("[ERROR] Dataset acquisition failed!")
 
+    def check_existing_containers(self):
+        """Check which containers already exist"""
+        runtime = self.detect_container_runtime()
+        if not runtime:
+            return {}
+
+        existing = {}
+
+        # Check for upstream/baseline container
+        result = subprocess.run([runtime, "images", "--format", "table"],
+                              capture_output=True, text=True)
+        if result.returncode == 0:
+            for line in result.stdout.split('\n'):
+                if "orb-slam3" in line and "upstream" in line:
+                    existing["baseline"] = True
+                elif "orb-slam3" in line and "optimized" in line:
+                    existing["optimized"] = True
+
+        return existing
+
     def build_containers(self):
         """Build Docker/Podman containers"""
         print("\n[CONTAINER BUILDING]")
@@ -174,16 +194,32 @@ class ORBSlam3CLI:
 
         print(f"Using container runtime: {runtime}")
 
+        # Check existing containers
+        existing = self.check_existing_containers()
+        if existing:
+            print("\nExisting containers found:")
+            for container_type, exists in existing.items():
+                if exists:
+                    print(f"✅ {container_type} container already exists")
+
+        # Ask user what to build
         build_options = [
             ("1", "baseline", "Build upstream baseline ORB-SLAM3"),
             ("2", "optimized", "Build with our performance optimizations"),
-            ("3", "both", "Build both baseline and optimized versions")
+            ("3", "both", "Build both baseline and optimized versions"),
+            ("4", "skip", "Skip building (use existing containers)")
         ]
 
         self.print_table(["Option", "Type", "Description"],
                         [(opt, btype, desc) for opt, btype, desc in build_options])
 
-        choice = self.get_user_choice("Select build option", ["1", "2", "3"], "3")
+        # Default to skip if both containers exist
+        default_choice = "4" if existing.get("baseline") and existing.get("optimized") else "3"
+        choice = self.get_user_choice("Select build option", ["1", "2", "3", "4"], default_choice)
+
+        if choice == "4":
+            print("[INFO] Skipping container builds - using existing containers")
+            return True
 
         option_map = {"1": "baseline", "2": "optimized", "3": "both"}
         build_type = option_map[choice]
@@ -191,18 +227,24 @@ class ORBSlam3CLI:
         build_success = True
 
         if build_type in ["baseline", "both"]:
-            result = self.run_command("python3 cross-platform-dev.py build-baseline",
-                                    "Building baseline container")
-            if result.returncode != 0:
-                print("[ERROR] Baseline container build failed!")
-                build_success = False
+            if existing.get("baseline"):
+                print("[INFO] Baseline container already exists, skipping...")
+            else:
+                result = self.run_command("python3 cross-platform-dev.py build-upstream",
+                                        "Building baseline container")
+                if result.returncode != 0:
+                    print("[ERROR] Baseline container build failed!")
+                    build_success = False
 
         if build_type in ["optimized", "both"]:
-            result = self.run_command("python3 cross-platform-dev.py build-optimized",
-                                    "Building optimized container")
-            if result.returncode != 0:
-                print("[ERROR] Optimized container build failed!")
-                build_success = False
+            if existing.get("optimized"):
+                print("[INFO] Optimized container already exists, skipping...")
+            else:
+                result = self.run_command("python3 cross-platform-dev.py build-optimized",
+                                        "Building optimized container")
+                if result.returncode != 0:
+                    print("[ERROR] Optimized container build failed!")
+                    build_success = False
 
         if build_success:
             print("[SUCCESS] Container building completed!")
@@ -236,7 +278,7 @@ class ORBSlam3CLI:
             run_counts = {"1": 5, "2": 25, "3": 50}
             runs = run_counts[choice]
 
-            cmd = f"python3 orbslam3_runner.py --runs {runs} --output-format json --export-plots"
+            cmd = f"python3 orbslam3_runner.py --runs {runs}"
             self.run_command(cmd, f"Running {runs}-iteration benchmark")
 
         print("[SUCCESS] Benchmarking completed!")
@@ -344,37 +386,43 @@ class ORBSlam3CLI:
             self.print_banner()
 
             menu_options = [
-                ("status", "Show system status"),
-                ("scrape", "Download EuRoC datasets"),
-                ("build", "Build containers (Docker/Podman)"),
-                ("benchmark", "Run benchmarks and tests"),
-                ("results", "View results dashboard"),
-                ("dev", "Launch development environment"),
-                ("quit", "Exit")
+                ("1", "status", "Show system status and check components"),
+                ("2", "scrape", "Download EuRoC datasets for testing"),
+                ("3", "build", "Build containers (Docker/Podman)"),
+                ("4", "benchmark", "Run benchmarks and performance tests"),
+                ("5", "results", "View results dashboard and analysis"),
+                ("6", "dev", "Launch development environment"),
+                ("0", "quit", "Exit application")
             ]
 
-            self.print_table(["Command", "Description"], menu_options, "Available Commands")
+            self.print_table(["Option", "Command", "Description"],
+                           [(opt, cmd, desc) for opt, cmd, desc in menu_options],
+                           "Available Commands")
 
-            choice = self.get_user_choice("Select command",
+            choice = self.get_user_choice("Select option",
                                         [opt[0] for opt in menu_options],
-                                        "status")
+                                        "1")
 
-            if choice == "quit":
+            # Map numbered choices to commands
+            choice_map = {opt[0]: opt[1] for opt in menu_options}
+            command = choice_map[choice]
+
+            if command == "quit":
                 break
-            elif choice == "status":
+            elif command == "status":
                 self.show_status()
-            elif choice == "scrape":
+            elif command == "scrape":
                 self.scrape_datasets()
-            elif choice == "build":
+            elif command == "build":
                 self.build_containers()
-            elif choice == "benchmark":
+            elif command == "benchmark":
                 self.run_benchmarks()
-            elif choice == "results":
+            elif command == "results":
                 self.view_results()
-            elif choice == "dev":
+            elif command == "dev":
                 self.development_environment()
 
-            if choice != "status":
+            if command != "status":
                 input("\nPress Enter to continue...")
 
 def main():

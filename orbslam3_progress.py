@@ -199,6 +199,19 @@ def run_orbslam_with_progress(container_name, vocab_path, config_path, sequence_
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     result_prefix = f"{sequence_name}_{container_name}_{timestamp}"
 
+    # Convert paths for container execution
+    # If sequence_path is absolute, make it relative to workspace
+    if os.path.isabs(sequence_path):
+        sequence_path_in_container = os.path.relpath(sequence_path, os.getcwd())
+        # Ensure it starts with /workspace/ for the container
+        sequence_path_in_container = f"/workspace/{sequence_path_in_container}"
+    else:
+        sequence_path_in_container = f"/workspace/{sequence_path}"
+
+    # Convert vocab and config paths for container
+    vocab_path_in_container = vocab_path  # These are already container paths
+    config_path_in_container = config_path
+
     # Build command - Fixed volume mounting and permissions
     cmd = [
         "podman", "run", "--rm",
@@ -207,7 +220,7 @@ def run_orbslam_with_progress(container_name, vocab_path, config_path, sequence_
         "-w", "/workspace/results",  # Work directly in results directory
         f"localhost/orb-slam3:{container_name}",
         "/opt/orb-slam3/Examples/Monocular/mono_euroc",
-        vocab_path, config_path, sequence_path, timestamps_path,
+        vocab_path_in_container, config_path_in_container, sequence_path_in_container, timestamps_path,
         f"{result_prefix}_trajectory"  # Just filename, ORB-SLAM3 adds f_ and kf_ prefixes
     ]
 

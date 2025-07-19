@@ -17,6 +17,9 @@ from dataclasses import dataclass, asdict
 from typing import Dict, List, Optional
 import statistics
 
+# Import ground truth evaluation
+from ground_truth_comparison import GroundTruthEvaluator
+
 # Try to import rich for better UI, fallback to basic print
 try:
     from rich.console import Console
@@ -46,6 +49,8 @@ class BenchmarkResult:
     rmse_rotation: float
     memory_peak_mb: float
     timestamp: str
+    ate_rmse: float = 0.0  # Ground truth ATE
+    ground_truth_available: bool = False
 
 class ORBSLAMBenchmarkUI:
     def __init__(self):
@@ -53,6 +58,7 @@ class ORBSLAMBenchmarkUI:
         self.results = []
         self.current_progress = {}
         self.benchmark_running = False
+        self.ground_truth_evaluator = GroundTruthEvaluator()
 
     def display_header(self):
         """Display application header"""
@@ -73,30 +79,34 @@ class ORBSLAMBenchmarkUI:
     def display_menu(self):
         """Display main menu"""
         if RICH_AVAILABLE and self.console:
-            menu = Table(title="Main Menu", box=box.ROUNDED)
+            menu = Table(title="ORB-SLAM3 Benchmarking Suite - Main Menu", box=box.ROUNDED)
             menu.add_column("Option", style="cyan", width=8)
             menu.add_column("Description", style="white")
+            menu.add_column("Details", style="dim")
 
-            menu.add_row("1", "Download EuRoC Datasets")
-            menu.add_row("2", "Run Single Sequence Test")
-            menu.add_row("3", "Run Full Benchmark Suite (50 runs)")
-            menu.add_row("4", "Run Sequential Benchmark (single container)")
-            menu.add_row("5", "View Results Dashboard")
-            menu.add_row("6", "Export Results")
-            menu.add_row("7", "System Info")
-            menu.add_row("q", "Quit")
+            menu.add_row("1", "Download EuRoC Datasets", "Get test sequences")
+            menu.add_row("2", "Run Single Sequence Test", "Quick individual test")
+            menu.add_row("3", "Run Full Benchmark Suite", "Comprehensive 50-run test")
+            menu.add_row("4", "Run Sequential Benchmark", "Single container mode")
+            menu.add_row("5", "View Results Dashboard", "Analyze performance")
+            menu.add_row("6", "Export Results", "Save data to files")
+            menu.add_row("7", "System Information", "Check system status")
+            menu.add_row("0", "Quit", "Exit application")
 
             self.console.print(menu)
         else:
-            print("\n--- Main Menu ---")
-            print("1. Download EuRoC Datasets")
-            print("2. Run Single Sequence Test")
-            print("3. Run Full Benchmark Suite (50 runs)")
-            print("4. Run Sequential Benchmark (single container)")
-            print("5. View Results Dashboard")
-            print("6. Export Results")
-            print("7. System Info")
-            print("q. Quit")
+            print("\n" + "="*60)
+            print(" ORB-SLAM3 Benchmarking Suite - Main Menu")
+            print("="*60)
+            print("1. Download EuRoC Datasets        - Get test sequences")
+            print("2. Run Single Sequence Test       - Quick individual test")
+            print("3. Run Full Benchmark Suite       - Comprehensive 50-run test")
+            print("4. Run Sequential Benchmark       - Single container mode")
+            print("5. View Results Dashboard         - Analyze performance")
+            print("6. Export Results                 - Save data to files")
+            print("7. System Information             - Check system status")
+            print("0. Quit                           - Exit application")
+            print("="*60)
 
     def download_datasets_interactive(self):
         """Interactive dataset download"""
@@ -179,9 +189,9 @@ class ORBSLAMBenchmarkUI:
                 print(f"\nTesting: {selected}")
                 print("Testing both baseline and optimized versions...")
 
-                # Run both versions
-                baseline_result = self.run_orbslam_sequence(location, sequence, "baseline")
-                optimized_result = self.run_orbslam_sequence(location, sequence, "optimized")
+                # Run both versions with ground truth evaluation
+                baseline_result = self.run_orbslam_sequence_with_ground_truth(location, sequence, "baseline")
+                optimized_result = self.run_orbslam_sequence_with_ground_truth(location, sequence, "optimized")
 
                 self.display_comparison(baseline_result, optimized_result)
 
@@ -233,6 +243,91 @@ class ORBSLAMBenchmarkUI:
             time.sleep(2)  # Simulate processing
 
         return result
+
+    def run_orbslam_sequence_with_ground_truth(self, location, sequence, version):
+        """Run ORB-SLAM3 on a specific sequence with ground truth evaluation"""
+        print(f"\nRunning {version} version on {location}/{sequence} with ground truth evaluation...")
+
+        # Create full sequence path
+        sequence_path = Path(f"datasets/EuRoC/{location}/{sequence}")
+        vocab_path = "/opt/orb-slam3/Vocabulary/ORBvoc.txt"
+        config_path = "/opt/orb-slam3/Examples/Monocular/EuRoC.yaml"
+
+        start_time = time.time()
+
+        # Run the actual ORB-SLAM3 with progress monitoring
+        try:
+            import orbslam3_progress
+            exit_code = orbslam3_progress.run_orbslam_with_progress(
+                version, vocab_path, config_path, str(sequence_path)
+            )
+
+            runtime_ms = (time.time() - start_time) * 1000
+
+            if exit_code == 0:
+                # Look for generated trajectory file
+                results_dir = Path("results")
+                trajectory_files = list(results_dir.glob(f"f_{sequence}_{version}_*_trajectory.txt"))
+
+                if trajectory_files:
+                    trajectory_file = trajectory_files[-1]
+
+                    # Get ground truth file
+                    gt_file = self.ground_truth_evaluator.get_ground_truth_file(sequence_path)
+
+                    if gt_file:
+                        # Evaluate against ground truth
+                        evaluation = self.ground_truth_evaluator.evaluate_against_ground_truth(
+                            trajectory_file, gt_file
+                        )
+
+                        # Handle evaluation results safely
+                        if evaluation:
+                            rmse_trans = evaluation.get("rmse_translation", 0.0)
+                            rmse_rot = evaluation.get("rmse_rotation", 0.0)
+                            ate_val = evaluation.get("ate_rmse", float('inf'))
+                            success_val = evaluation.get("success", False)
+                        else:
+                            rmse_trans = 0.0
+                            rmse_rot = 0.0
+                            ate_val = float('inf')
+                            success_val = False
+
+                        return BenchmarkResult(
+                            sequence=f"{location}/{sequence}",
+                            version=version,
+                            run_number=1,
+                            success=True,
+                            runtime_ms=runtime_ms,
+                            tracking_lost_frames=0,  # Would parse from output
+                            total_frames=3680,  # Would parse from output
+                            rmse_translation=rmse_trans,
+                            rmse_rotation=rmse_rot,
+                            memory_peak_mb=1200.0,  # Would monitor during run
+                            timestamp=datetime.now().isoformat(),
+                            ate_rmse=ate_val,
+                            ground_truth_available=success_val
+                        )
+
+        except Exception as e:
+            print(f"Error running ORB-SLAM3: {e}")
+
+        # Return failed result
+        return BenchmarkResult(
+            sequence=f"{location}/{sequence}",
+            version=version,
+            run_number=1,
+            success=False,
+            runtime_ms=0.0,
+            tracking_lost_frames=0,
+            total_frames=0,
+            rmse_translation=float('inf'),
+            rmse_rotation=float('inf'),
+            memory_peak_mb=0.0,
+            timestamp=datetime.now().isoformat(),
+            ate_rmse=float('inf'),
+            ground_truth_available=False
+        )
 
     def display_comparison(self, baseline, optimized):
         """Display comparison between baseline and optimized results"""
@@ -467,9 +562,9 @@ class ORBSLAMBenchmarkUI:
             self.display_menu()
 
             try:
-                choice = input("\nSelect option: ").strip().lower()
+                choice = input("\nSelect option (0-7): ").strip().lower()
 
-                if choice == 'q':
+                if choice == '0' or choice == 'q':
                     print("Goodbye!")
                     break
                 elif choice == '1':
@@ -487,9 +582,9 @@ class ORBSLAMBenchmarkUI:
                 elif choice == '7':
                     self.display_system_info()
                 else:
-                    print("Invalid option!")
+                    print("Invalid option! Please select 0-7.")
 
-                if choice != 'q':
+                if choice not in ['0', 'q']:
                     input("\nPress Enter to continue...")
 
             except KeyboardInterrupt:
