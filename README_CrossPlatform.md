@@ -433,6 +433,27 @@ python3 results_dashboard.py --results-file batch_analysis.json --export-report
 
 ## Troubleshooting
 
+### Headless Operation Safety
+
+**Our containerized ORB-SLAM3 uses stub implementations for GUI components - this is completely SAFE:**
+
+**✅ Core SLAM Functions Preserved:**
+- Feature extraction and ORB matching
+- Camera tracking and pose estimation
+- Bundle adjustment optimization
+- Loop closure detection and correction
+- Map building and point triangulation
+- IMU integration (inertial versions)
+- Trajectory output and accuracy
+
+**❌ Only GUI Features Disabled:**
+- Real-time 3D visualization (not needed for benchmarking)
+- Interactive controls (not needed for headless operation)
+- Visual debugging displays (not needed for automated testing)
+
+**Technical Background:**
+The GUI components (`Viewer`, `FrameDrawer`, `MapDrawer`) are called by ORB-SLAM3's core system only for **state synchronization after all SLAM computations are complete**. These calls happen at the very end of the tracking loop, after pose optimization and map updates. Our stub implementations make these calls no-ops while preserving all critical SLAM algorithms. This maintains the original ORB-SLAM3's `bUseViewer = false` design philosophy.
+
 ### Common Issues
 
 #### Container Build Fails
