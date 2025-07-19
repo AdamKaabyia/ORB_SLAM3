@@ -200,7 +200,7 @@ class ORBSlam3CLI:
             print("\nExisting containers found:")
             for container_type, exists in existing.items():
                 if exists:
-                    print(f"✅ {container_type} container already exists")
+                    print(f"[✓] {container_type} container already exists")
 
         # Ask user what to build
         build_options = [

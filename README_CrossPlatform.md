@@ -437,7 +437,7 @@ python3 results_dashboard.py --results-file batch_analysis.json --export-report
 
 **Our containerized ORB-SLAM3 uses stub implementations for GUI components - this is completely SAFE:**
 
-**✅ Core SLAM Functions Preserved:**
+**[✓] Core SLAM Functions Preserved:**
 - Feature extraction and ORB matching
 - Camera tracking and pose estimation
 - Bundle adjustment optimization
@@ -446,7 +446,7 @@ python3 results_dashboard.py --results-file batch_analysis.json --export-report
 - IMU integration (inertial versions)
 - Trajectory output and accuracy
 
-**❌ Only GUI Features Disabled:**
+**[x] Only GUI Features Disabled:**
 - Real-time 3D visualization (not needed for benchmarking)
 - Interactive controls (not needed for headless operation)
 - Visual debugging displays (not needed for automated testing)
