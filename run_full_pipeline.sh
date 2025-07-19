@@ -43,9 +43,9 @@ show_banner() {
     echo "  1. Clean up any existing containers/images"
     echo "  2. Build upstream and optimized container images"
     echo "  3. Download complete EuRoC dataset"
-    echo "  4. Run benchmarks on sample sequences"
+    echo "  4. Run baseline + optimized benchmarks on ALL EuRoC sequences"
     echo "  5. Convert results to dashboard format"
-    echo "  6. Launch interactive results dashboard"
+    echo "  6. Launch results dashboard"
     echo ""
 }
 
@@ -121,37 +121,55 @@ download_datasets() {
     echo_success "Dataset downloads completed"
 }
 
-run_sample_benchmarks() {
-    echo_step "Running sample benchmarks..."
+run_comprehensive_benchmarks() {
+    echo_step "Running comprehensive benchmarks..."
 
     # Create results directory
     mkdir -p results
 
-    # Sample sequences to test
+    # ALL EuRoC sequences for comprehensive testing
     SEQUENCES=(
         "machine_hall/MH_01_easy"
         "machine_hall/MH_02_easy"
+        "machine_hall/MH_03_medium"
+        "machine_hall/MH_04_difficult"
+        "machine_hall/MH_05_difficult"
         "vicon_room1/V1_01_easy"
+        "vicon_room1/V1_02_medium"
+        "vicon_room1/V1_03_difficult"
+        "vicon_room2/V2_01_easy"
+        "vicon_room2/V2_02_medium"
+        "vicon_room2/V2_03_difficult"
     )
 
-    echo_info "Running benchmarks on sample sequences..."
+    echo_info "Running benchmarks on ALL 11 EuRoC sequences (22 total runs)..."
 
-    for sequence in "${SEQUENCES[@]}"; do
+        for sequence in "${SEQUENCES[@]}"; do
         echo_info "Processing ${sequence}..."
 
+        # Run baseline version first
+        echo_info "  → Running baseline version..."
+        python3 orbslam3_progress.py upstream \
+            /opt/orb-slam3/Vocabulary/ORBvoc.txt \
+            /opt/orb-slam3/Examples/Monocular/EuRoC.yaml \
+            /workspace/datasets/EuRoC/${sequence} || {
+            echo_warning "Failed baseline ${sequence}, continuing..."
+        }
+
         # Run optimized version
+        echo_info "  → Running optimized version..."
         python3 orbslam3_progress.py optimized \
             /opt/orb-slam3/Vocabulary/ORBvoc.txt \
             /opt/orb-slam3/Examples/Monocular/EuRoC.yaml \
             /workspace/datasets/EuRoC/${sequence} || {
-            echo_warning "Failed to process ${sequence}, continuing..."
+            echo_warning "Failed optimized ${sequence}, continuing..."
             continue
         }
 
-        echo_success "Completed ${sequence}"
+        echo_success "Completed both versions for ${sequence}"
     done
 
-    echo_success "Sample benchmarks completed"
+    echo_success "Comprehensive EuRoC benchmarks completed"
 }
 
 convert_results() {
@@ -193,7 +211,7 @@ show_completion_summary() {
     echo "What was accomplished:"
     echo "  [✓] Built upstream and optimized container images"
     echo "  [✓] Downloaded complete EuRoC dataset"
-    echo "  [✓] Ran sample benchmarks"
+    echo "  [✓] Ran comprehensive baseline + optimized benchmarks (22 total runs)"
     echo "  [✓] Generated results dashboard"
     echo ""
     echo "Next steps:"
@@ -225,7 +243,7 @@ main() {
     cleanup_containers
     build_containers
     download_datasets
-    run_sample_benchmarks
+    run_comprehensive_benchmarks
     convert_results
     launch_dashboard
 
