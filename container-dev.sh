@@ -51,7 +51,7 @@ run_dev_container() {
         -v "$(pwd)":/workspace:Z \
         -w /workspace \
         --userns=keep-id \
-        $IMAGE_TAG /bin/bash
+        $IMAGE_TAG /bin/sh
 }
 
 run_tests() {
@@ -61,7 +61,7 @@ run_tests() {
     podman run --rm \
         -v "$(pwd)":/workspace:Z \
         -w /workspace \
-        $IMAGE_TAG /bin/bash -c '
+        $IMAGE_TAG /bin/sh -c '
         echo "Testing ORB-SLAM3 build..."
         ls -la build/
 
@@ -82,7 +82,7 @@ benchmark_performance() {
     podman run --rm \
         -v "$(pwd)":/workspace:Z \
         -w /workspace \
-        $IMAGE_TAG /bin/bash -c '
+        $IMAGE_TAG /bin/sh -c '
         echo "Performance Test: Matrix Multiplication (Eigen 3.4.0 optimization)"
 
         cat > /tmp/eigen_test.cpp << EOF

@@ -82,12 +82,12 @@ def run_command(cmd, command_type="build", version="optimized"):
     elif command_type == "test":
         print(f"Testing {description}...")
         cmd = [engine, "run", "--rm", "-v", f"{os.getcwd()}/datasets:/opt/orb-slam3/datasets:Z",
-               image_tag, "/bin/bash", "-c", "ls /opt/orb-slam3/Examples/ && echo 'Container working!'"]
+               image_tag, "/bin/sh", "-c", "ls /opt/orb-slam3/Examples/ && echo 'Container working!'"]
     elif command_type == "benchmark":
         print(f"Benchmarking {description}...")
         cmd = [engine, "run", "--rm", "-v", f"{os.getcwd()}/datasets:/opt/orb-slam3/datasets:Z",
                "-v", f"{os.getcwd()}/results:/opt/orb-slam3/results:Z",
-               image_tag, "/bin/bash", "-c", "cd /opt/orb-slam3 && echo 'Benchmark mode ready'"]
+               image_tag, "/bin/sh", "-c", "cd /opt/orb-slam3 && echo 'Benchmark mode ready'"]
     elif command_type == "clean":
         print(f"Cleaning {description}...")
         subprocess.run([engine, "stop", container_name], capture_output=True)
