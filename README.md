@@ -46,6 +46,22 @@ python3 results_dashboard.py --results-file results.json
 python3 results_dashboard.py --results-file results.json --export-report
 ```
 
+### **One-shot Compare (new)**
+```bash
+# Guided flow: pick versions (with common presets), optional repo@ref validation,
+# confirm builds if needed, run, export and render dashboard
+python3 orbslam3_cli.py one-shot
+```
+Inputs per version:
+- Preset number: 1) v0.2-beta  2) v0.3-beta  3) v0.4-beta  4) v1.0  5) master
+- Existing tag: e.g., `optimized`, `upstream-v1.0`, `upstream-master`
+- Plain upstream ref: e.g., `v1.0` (resolved to `upstream-v1.0`)
+- Custom: `https://github.com/UZ-SLAMLab/ORB_SLAM3.git@v1.0` (validated and prompts before build)
+
+Behavior:
+- If a needed image tag is missing, you will be prompted before building (no auto-build without confirmation).
+- After the run, a dashboard JSON is created and rendered automatically with dynamic column headers (actual compared tags).
+
 ### **Traditional Build (if needed)**
 ```bash
 git clone https://github.com/AdamKaabyia/ORB_SLAM3.git
@@ -202,7 +218,16 @@ python3 orbslam3_cli.py compare
 ```
 
 - Select any two versions (container tags and optional `local`).
-- Missing `upstream-<ref>` tags are built automatically from the official repo using `ORBSLAM_REF=<ref>`.
+- Presets for common upstream versions are shown; you can also enter a `repo@ref`.
+- If a required `upstream-<ref>` tag is missing, you'll be asked to confirm building it.
+
+### One-shot compare (end-to-end)
+```bash
+python3 orbslam3_cli.py one-shot
+```
+- Pick versions using presets, tags, refs, or `repo@ref`.
+- Confirms and builds any missing images, runs comparison, exports results JSON, and shows the dashboard.
+- Dashboard columns are labeled with the actual compared tags.
 
 ### Build and compare two upstream versions (single command)
 

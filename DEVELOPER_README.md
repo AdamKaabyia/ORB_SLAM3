@@ -209,14 +209,14 @@ podman tag localhost/orb-slam3:upstream localhost/orb-slam3:upstream-master
 # Live streaming logs
 PYTHONUNBUFFERED=1 RICH_FORCE_TERMINAL=1 \
 python3 compare_versions.py --runs 1 --sequences MH_01_easy \
-  --versions upstream-v1.0 our-local
+  --versions upstream-v1.0 optimized
 
 # Arbitrary tags (forks/branches)
 python3 compare_versions.py --runs 1 --sequences MH_01_easy \
   --versions upstream-v0.4-beta upstream-master
 
 # Include local (host build) if present
-python3 compare_versions.py --include-local --versions our-local upstream-v1.0 --sequences MH_01_easy
+python3 compare_versions.py --include-local --versions optimized upstream-v1.0 --sequences MH_01_easy
 ```
 
 ### Interactive comparison via CLI
@@ -226,7 +226,16 @@ python3 orbslam3_cli.py compare
 ```
 
 - Pick any two versions (container tags, optional `local`).
-- Missing `upstream-<ref>` tags are auto-built using `ORBSLAM_REF`.
+- Presets for common upstream refs are available; you can also enter a `repo@ref` which is validated before build.
+- No auto-build without confirmation. If a required image is missing, the CLI prompts to build.
+
+### One-shot compare (end-to-end)
+```bash
+python3 orbslam3_cli.py one-shot
+```
+- Accepts: numeric preset (v0.2-beta, v0.3-beta, v0.4-beta, v1.0, master), existing tag (e.g., `optimized`, `upstream-v1.0`), plain ref (e.g., `v1.0`), or `repo@ref`.
+- For `repo@ref`, ref is checked via `git ls-remote` and then built only after confirmation; resulting image is tagged as `upstream-<repo>-<ref>`.
+- After execution, a dashboard JSON is exported and displayed automatically with dynamic column headers.
 
 #### **4. Ground Truth Evaluation**
 ```bash

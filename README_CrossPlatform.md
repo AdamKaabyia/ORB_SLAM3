@@ -79,6 +79,15 @@ python3 cross-platform-dev.py build
 python3 euroc_dataset_scraper.py --location machine_hall
 ```
 
+### 3.1 One-shot Version Comparison (new)
+```bash
+python3 orbslam3_cli.py one-shot
+```
+- Pick versions from common presets (v0.2-beta, v0.3-beta, v0.4-beta, v1.0, master), enter tags, refs, or `repo@ref`.
+- For `repo@ref`, the ref is validated via `git ls-remote` and you'll be asked to confirm before building.
+- Missing images will never be auto-built silently; the CLI asks first.
+- After runs, the dashboard JSON is exported and rendered with dynamic column headers matching the compared tags.
+
 ### 4. Container Development
 ```bash
 # Build optimized container
@@ -260,12 +269,12 @@ podman tag localhost/orb-slam3:upstream localhost/orb-slam3:upstream-master
 ```bash
 PYTHONUNBUFFERED=1 RICH_FORCE_TERMINAL=1 \
 python3 compare_versions.py --runs 1 --sequences MH_01_easy \
-  --versions upstream-v1.0 our-local
+  --versions upstream-v1.0 optimized
 ```
 
 Options:
-- `--versions` any tags (`upstream-v0.3-beta`, `upstream-master`, `our-local`)
-- `--include-local` also compare a host build (if exists)
+- `--versions` any tags (`upstream-v0.3-beta`, `upstream-master`, `optimized`)
+- `--include-local` also compare a host build (if present). `local` is not a tag; it's enabled via this flag.
 - `--no-stream` disable live logs; `--no-save-logs` skip file logs
 
 ### Interactive selection
@@ -274,7 +283,7 @@ Options:
 python3 orbslam3_cli.py compare
 ```
 
-Select two versions (container tags or `local`). Missing `upstream-<ref>` tags are built automatically using the official repo.
+Select two versions (container tags or `local`). Common presets are shown; you can also enter a `repo@ref`. If a required `upstream-<ref>` tag is missing, you'll be asked to confirm building it.
 
 ### Build and compare two upstream versions (end-to-end)
 
