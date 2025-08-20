@@ -305,6 +305,27 @@ For detailed setup instructions, see [Cross-Platform Setup Guide](README_CrossPl
 
 For development and contribution guidelines, see [Developer Guide](DEVELOPER_README.md).
 
+## Testing
+
+### Unit tests (no containers required)
+```bash
+pip3 install pytest
+pytest
+```
+The test run is verbose and shows which tests passed/failed and any skips.
+
+### Container integration smoke test (opt-in)
+```bash
+# With existing images
+ORB_INTEGRATION=1 pytest
+
+# Allow auto-build of missing images
+ORB_INTEGRATION=1 ORB_ALLOW_BUILD=1 pytest
+```
+Notes:
+- Requires Podman or Docker and the EuRoC sequence `datasets/EuRoC/machine_hall/MH_01_easy` present.
+- The integration test runs a single-sequence compare and asserts the exported dashboard JSON looks correct.
+
 ## Related Work
 
 This enhanced version builds upon the excellent original ORB-SLAM3 work:
