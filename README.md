@@ -321,10 +321,25 @@ ORB_INTEGRATION=1 pytest
 
 # Allow auto-build of missing images
 ORB_INTEGRATION=1 ORB_ALLOW_BUILD=1 pytest
+
+# Run only the container test (more detail)
+ORB_INTEGRATION=1 pytest -k test_compare_versions_container_smoke -s
+
+# Skip the container test (unit tests only)
+pytest -k 'not integration'
 ```
 Notes:
 - Requires Podman or Docker and the EuRoC sequence `datasets/EuRoC/machine_hall/MH_01_easy` present.
 - The integration test runs a single-sequence compare and asserts the exported dashboard JSON looks correct.
+ - It can take several minutes due to vocabulary load (~139MB) and full-sequence processing.
+
+Live logs without pytest (foreground compare):
+```bash
+PYTHONUNBUFFERED=1 RICH_FORCE_TERMINAL=1 \
+python3 compare_versions.py --runs 1 --sequences MH_01_easy \
+  --versions upstream-v1.0 optimized \
+  --export-dashboard compare_dashboard_integration.json
+```
 
 ## Related Work
 
