@@ -239,6 +239,52 @@ python platform-benchmark.py
 # Start interactive UI
 python3 orbslam3_benchmark_ui.py
 ```
+# Version Comparison (Containers)
+
+You can compare multiple ORB-SLAM3 versions using Alpine-based containers.
+
+### Build upstream refs
+
+```bash
+# Upstream release v1.0
+ORBSLAM_REF=v1.0 python3 cross-platform-dev.py build-upstream
+podman tag localhost/orb-slam3:upstream localhost/orb-slam3:upstream-v1.0
+
+# Upstream master
+ORBSLAM_REF=master python3 cross-platform-dev.py build-upstream
+podman tag localhost/orb-slam3:upstream localhost/orb-slam3:upstream-master
+```
+
+### Compare (container-only)
+
+```bash
+PYTHONUNBUFFERED=1 RICH_FORCE_TERMINAL=1 \
+python3 compare_versions.py --runs 1 --sequences MH_01_easy \
+  --versions upstream-v1.0 our-local
+```
+
+Options:
+- `--versions` any tags (`upstream-v0.3-beta`, `upstream-master`, `our-local`)
+- `--include-local` also compare a host build (if exists)
+- `--no-stream` disable live logs; `--no-save-logs` skip file logs
+
+### Interactive selection
+
+```bash
+python3 orbslam3_cli.py compare
+```
+
+Select two versions (container tags or `local`). Missing `upstream-<ref>` tags are built automatically using the official repo.
+
+### Build and compare two upstream versions (end-to-end)
+
+```bash
+python3 orbslam3_cli.py compare-upstream
+```
+
+- Enter two upstream refs when prompted (e.g., `v1.0` and `v0.4-beta`).
+- The script builds and tags `upstream-<ref>` images, then runs the comparison with live output.
+- Optionally export a dashboard JSON to use with `results_dashboard.py`.
 
 The interactive UI provides:
 - **Dataset Download**: Automated EuRoC dataset acquisition
@@ -260,7 +306,7 @@ python3 export_results.py --format csv
 ## Performance Dashboard
 
 ### Dashboard Features
-- **Performance Comparison**: Baseline vs optimized analysis
+- **Performance Comparison**: Baseline vs our local version analysis
 - **Statistical Significance**: Confidence intervals and improvement metrics
 - **Per-Sequence Breakdown**: Individual dataset performance
 - **System Information**: Hardware configuration and test environment

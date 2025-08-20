@@ -81,7 +81,7 @@ The enhanced system provides a complete pipeline from SLAM execution to professi
 - **System Metrics**: CPU, memory, and accuracy measurements
 
 ### **Dashboard Features**
-- **Performance Comparison**: Baseline vs optimized analysis
+- **Performance Comparison**: Baseline vs our local version (optimized) analysis
 - **Statistical Significance**: Confidence intervals and improvement metrics
 - **Per-Sequence Breakdown**: Individual dataset performance
 - **System Information**: Hardware configuration and test environment
@@ -163,6 +163,56 @@ python3 results_dashboard.py --results-file benchmark_results.json --export-repo
 # Non-interactive summary
 python3 results_dashboard.py --results-file benchmark_results.json --no-interactive
 ```
+
+## Version Comparison (Containers)
+
+Compare different ORB-SLAM3 versions using Alpine-based containers.
+
+### Build common upstream references
+
+```bash
+# Build and tag upstream v1.0
+ORBSLAM_REF=v1.0 python3 cross-platform-dev.py build-upstream
+podman tag localhost/orb-slam3:upstream localhost/orb-slam3:upstream-v1.0
+
+# Build and tag upstream master
+ORBSLAM_REF=master python3 cross-platform-dev.py build-upstream
+podman tag localhost/orb-slam3:upstream localhost/orb-slam3:upstream-master
+```
+
+### Quick comparison (container-only)
+
+```bash
+# Live streaming output
+PYTHONUNBUFFERED=1 RICH_FORCE_TERMINAL=1 \
+python3 compare_versions.py --runs 1 --sequences MH_01_easy \
+  --versions upstream-v1.0 optimized
+```
+
+Flags:
+- `--versions`: list any container tags to compare (e.g., `upstream-v0.4-beta`, `upstream-master`, `optimized`)
+- `--include-local`: also compare a host-built binary if available
+- `--no-stream`: disable live terminal streaming
+- `--no-save-logs`: skip writing `benchmark_results/compare_*.log`
+
+### Interactive picker
+
+```bash
+python3 orbslam3_cli.py compare
+```
+
+- Select any two versions (container tags and optional `local`).
+- Missing `upstream-<ref>` tags are built automatically from the official repo using `ORBSLAM_REF=<ref>`.
+
+### Build and compare two upstream versions (single command)
+
+```bash
+python3 orbslam3_cli.py compare-upstream
+```
+
+- Prompts for two upstream refs (e.g., `v1.0`, `v0.4-beta`, `master`).
+- Builds both Alpine containers, tags them as `upstream-<ref>`, and runs a comparison with live logs.
+- Optional prompt to export a dashboard JSON for full metrics (use with `results_dashboard.py`).
 
 ## Build Optimizations
 

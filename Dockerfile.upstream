@@ -2,6 +2,11 @@
 # Basic Alpine setup (no optimizations)
 FROM alpine:latest
 
+# Build-time parameters to allow custom upstream versions
+ARG ORBSLAM_REPO=https://github.com/UZ-SLAMLab/ORB_SLAM3.git
+ARG ORBSLAM_REF=master
+ARG CXXFLAGS_ARG="-O0 -Wno-array-bounds -Wno-aggressive-loop-optimizations -Wno-deprecated-declarations -fpermissive -std=c++17"
+
 LABEL description="Upstream ORB-SLAM3 baseline for comparison" \
       version="upstream-baseline"
 
@@ -29,7 +34,8 @@ RUN apk update && apk upgrade && \
 WORKDIR /opt/orb-slam3
 
 # Clone original ORB-SLAM3 from upstream repository and patch for headless operation
-RUN git clone https://github.com/UZ-SLAMLab/ORB_SLAM3.git . && \
+RUN git clone ${ORBSLAM_REPO} . && \
+    git checkout ${ORBSLAM_REF} && \
     echo "Using original upstream ORB-SLAM3 code for baseline comparison" && \
     # Remove Pangolin dependencies from CMakeLists.txt for headless operation
     sed -i '/find_package(Pangolin REQUIRED)/d' CMakeLists.txt && \
@@ -85,7 +91,7 @@ RUN git clone https://github.com/UZ-SLAMLab/ORB_SLAM3.git . && \
 
 # Basic environment with NO optimizations (baseline for performance comparison)
 # Your codebase compiled with -O0 (no optimization) for baseline measurements
-ENV CXXFLAGS="-O0 -Wno-array-bounds -Wno-aggressive-loop-optimizations -Wno-deprecated-declarations -fpermissive -std=c++17"
+ENV CXXFLAGS=${CXXFLAGS_ARG}
 ENV CFLAGS="-O0 -Wno-array-bounds -Wno-aggressive-loop-optimizations"
 
 # Build with no optimizations (baseline performance container)

@@ -1,0 +1,286 @@
+
+=== Running upstream-v1.0 on machine_hall/MH_01_easy (runs=1) ===
+Auto-detected timestamp file: 
+/opt/orb-slam3/Examples/Monocular/EuRoC_TimeStamps/MH01.txt
+Estimated total frames: 3,682
+╭──────────────────────── Starting SLAM Processing ─────────────────────────╮
+│ ORB-SLAM3 Real-Time Monitor                                               │
+│ Container: upstream-v1.0                                                  │
+│ Sequence: datasets/EuRoC/machine_hall/MH_01_easy                          │
+│ Expected frames: 3,682                                                    │
+│ Output files: f_MH_01_easy_upstream-v1.0_20250819_063817_trajectory.txt,  │
+│ kf_MH_01_easy_upstream-v1.0_20250819_063817_trajectory.txt                │
+╰───────────────────────────────────────────────────────────────────────────╯
+Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]
+ORB-SLAM3: Loading images for sequence 0...LOADED!
+Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]
+ORB-SLAM3: -Loaded camera 1
+Status: Starting... [1s]
+ORB-SLAM3: -Loaded image info
+Status: Starting... [1s]
+ORB-SLAM3: -Loaded ORB settings
+Status: Starting... [1s]
+ORB-SLAM3: Camera1.k3 optional parameter does not exist...
+Status: Starting... [1s]Status: Starting... [1s]
+ORB-SLAM3: System.LoadAtlasFromFile optional parameter does not exist...
+Status: Starting... [1s]
+ORB-SLAM3: System.SaveAtlasToFile       -Loaded viewer settings
+Status: Starting... [1s]
+ORB-SLAM3: -Loaded Atlas settings
+Status: Starting... [1s]
+ORB-SLAM3: -Loaded misc parameters
+Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]
+ORB-SLAM3: -Camera 1 parameters (Pinhole): [ 458.65399169921875 
+457.29598999023438 367.21499633789062 248.375 ]
+Status: Starting... [1s]
+ORB-SLAM3: -Camera 1 distortion parameters: [  -0.28340810537338257 
+0.073959067463874817 0.00019359000725671649 1.7618711353861727e-05 ]
+Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]
+ORB-SLAM3: -Camera 1 parameters after resize: [  365.94735717773438 
+333.44500732421875 292.99069213867188 181.10678100585938 ]
+Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Loading vocabulary (139MB)... [1s]
+ORB-SLAM3: Loading ORB Vocabulary. This could take a while...
+Status: Vocabulary loaded - Initializing system... [18s]
+ORB-SLAM3: Vocabulary loaded!
+Status: Vocabulary loaded - Initializing system... [18s]Status: Vocabulary loaded - Initializing system... [18s]
+ORB-SLAM3: Initialization of Atlas from scratch
+Status: Vocabulary loaded - Initializing system... [18s]
+ORB-SLAM3: Creation of new map with id: 0
+Status: Vocabulary loaded - Initializing system... [18s]
+ORB-SLAM3: Creation of new map with last KF id: 0
+Status: Vocabulary loaded - Initializing system... [18s]Status: Vocabulary loaded - Initializing system... [18s]
+ORB-SLAM3: There are 1 cameras in the atlas
+Status: Processing frames... [18s]
+ORB-SLAM3: Camera 0 is pinhole
+Status: Processing frames... [19s]
+ORB-SLAM3: First KF:0; Map init KF:0
+Status: Map initialized - Processing frames... [19s]
+ORB-SLAM3: New Map created with 157 points
+Status: Map initialized - Processing frames... [215s]
+ORB-SLAM3: Shutdown
+Status: Map initialized - Processing frames... [215s]Status: Saving trajectory... [215s]
+ORB-SLAM3: Saving trajectory to 
+f_MH_01_easy_upstream-v1.0_20250819_063817_trajectory.txt ...
+Status: Saving trajectory... [215s]
+ORB-SLAM3: There are 1 maps in the atlas
+Status: Saving trajectory... [215s]
+ORB-SLAM3: Map 0 has 276 KFs
+Status: Saving trajectory... [215s]Status: Saving keyframe data... [215s]
+ORB-SLAM3: End of saving trajectory to 
+f_MH_01_easy_upstream-v1.0_20250819_063817_trajectory.txt ...
+Status: Saving keyframe data... [215s]Status: Processing complete! [215s]
+ORB-SLAM3: Saving keyframe trajectory to 
+kf_MH_01_easy_upstream-v1.0_20250819_063817_trajectory.txt ...
+
+╭───────────────────────────────── Success ─────────────────────────────────╮
+│ Processing Complete!                                                      │
+│ Successfully processed 3,682 frames                                       │
+│ Results saved to: results/                                                │
+│ Files: f_MH_01_easy_upstream-v1.0_20250819_063817_trajectory.txt,         │
+│ kf_MH_01_easy_upstream-v1.0_20250819_063817_trajectory.txt                │
+╰───────────────────────────────────────────────────────────────────────────╯
+
+=== Running upstream-v0.4-beta on machine_hall/MH_01_easy (runs=1) ===
+Auto-detected timestamp file: 
+/opt/orb-slam3/Examples/Monocular/EuRoC_TimeStamps/MH01.txt
+Estimated total frames: 3,682
+╭──────────────────────── Starting SLAM Processing ─────────────────────────╮
+│ ORB-SLAM3 Real-Time Monitor                                               │
+│ Container: upstream-v0.4-beta                                             │
+│ Sequence: datasets/EuRoC/machine_hall/MH_01_easy                          │
+│ Expected frames: 3,682                                                    │
+│ Output files:                                                             │
+│ f_MH_01_easy_upstream-v0.4-beta_20250819_064153_trajectory.txt,           │
+│ kf_MH_01_easy_upstream-v0.4-beta_20250819_064153_trajectory.txt           │
+╰───────────────────────────────────────────────────────────────────────────╯
+Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]
+ORB-SLAM3: Loading images for sequence 0...LOADED!
+Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]
+ORB-SLAM3: -Loaded camera 1
+Status: Starting... [1s]
+ORB-SLAM3: -Loaded image info
+Status: Starting... [1s]
+ORB-SLAM3: -Loaded ORB settings
+Status: Starting... [1s]
+ORB-SLAM3: -Loaded viewer settings
+Status: Starting... [1s]
+ORB-SLAM3: -Loaded Atlas settings
+Status: Starting... [1s]
+ORB-SLAM3: -Loaded misc parameters
+Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]
+ORB-SLAM3: -Camera 1 parameters (Pinhole): [ 458.65399169921875 
+457.29598999023438 367.21499633789062 248.375 ]
+Status: Starting... [1s]
+ORB-SLAM3: Camera1.k3 optional parameter does not exist...
+Status: Starting... [1s]Status: Starting... [1s]
+ORB-SLAM3: System.LoadAtlasFromFile optional parameter does not exist...
+Status: Starting... [1s]
+ORB-SLAM3: System.SaveAtlasToFile optional parameter does not exist...
+Status: Starting... [1s]Status: Starting... [1s]
+ORB-SLAM3: -Camera 1 distortion parameters: [  -0.28340810537338257 
+0.073959067463874817 0.00019359000725671649 1.7618711353861727e-05 ]
+Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]
+ORB-SLAM3: -Camera 1 parameters after resize: [  365.94735717773438 
+333.44500732421875 292.99069213867188 181.10678100585938 ]
+Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Loading vocabulary (139MB)... [1s]
+ORB-SLAM3: Loading ORB Vocabulary. This could take a while...
+Status: Vocabulary loaded - Initializing system... [19s]
+ORB-SLAM3: Vocabulary loaded!
+Status: Vocabulary loaded - Initializing system... [19s]Status: Vocabulary loaded - Initializing system... [19s]
+ORB-SLAM3: Initialization of Atlas from scratch
+Status: Vocabulary loaded - Initializing system... [19s]
+ORB-SLAM3: Creation of new map with id: 0
+Status: Vocabulary loaded - Initializing system... [19s]
+ORB-SLAM3: Creation of new map with last KF id: 0
+Status: Vocabulary loaded - Initializing system... [19s]Status: Vocabulary loaded - Initializing system... [19s]
+ORB-SLAM3: There are 1 cameras in the atlas
+Status: Processing frames... [19s]
+ORB-SLAM3: Camera 0 is pinhole
+Status: Processing frames... [19s]
+ORB-SLAM3: First KF:0; Map init KF:0
+Status: Map initialized - Processing frames... [19s]
+ORB-SLAM3: New Map created with 157 points
+Status: Map initialized - Processing frames... [213s]
+ORB-SLAM3: Shutdown
+Status: Map initialized - Processing frames... [213s]Status: Saving trajectory... [213s]
+ORB-SLAM3: Saving trajectory to 
+f_MH_01_easy_upstream-v0.4-beta_20250819_064153_trajectory.txt ...
+Status: Saving trajectory... [213s]
+ORB-SLAM3: There are 1 maps in the atlas
+Status: Saving trajectory... [213s]
+ORB-SLAM3: Map 0 has 279 KFs
+Status: Saving trajectory... [213s]Status: Saving keyframe data... [213s]
+ORB-SLAM3: End of saving trajectory to 
+f_MH_01_easy_upstream-v0.4-beta_20250819_064153_trajectory.txt ...
+Status: Saving keyframe data... [213s]Status: Processing complete! [213s]
+ORB-SLAM3: Saving keyframe trajectory to 
+kf_MH_01_easy_upstream-v0.4-beta_20250819_064153_trajectory.txt ...
+
+╭───────────────────────────────── Success ─────────────────────────────────╮
+│ Processing Complete!                                                      │
+│ Successfully processed 3,682 frames                                       │
+│ Results saved to: results/                                                │
+│ Files: f_MH_01_easy_upstream-v0.4-beta_20250819_064153_trajectory.txt,    │
+│ kf_MH_01_easy_upstream-v0.4-beta_20250819_064153_trajectory.txt           │
+╰───────────────────────────────────────────────────────────────────────────╯
+
+Comparison Summary
+--------------------------------------------------------------------------------
+Sequence | Version | Runtime (ms) | Success
+--------------------------------------------------------------------------------
+machine_hall/MH_01_easy | upstream-v1.0 | 215848.0 | yes
+machine_hall/MH_01_easy | upstream-v0.4-beta | 213642.5 | yes
+--------------------------------------------------------------------------------
+Saved comparison results to: benchmark_results/compare_results_machine_hall_MH_01_easy_upstream-v1.0__vs__upstream-v0.4-beta_20250819_064526.json
+Exporting dashboard JSON via trajectory conversion -> compare_dashboard_pair.json
+Converting trajectory files to benchmark results...
+Found 97 trajectory files
+  * Converted: f_MH_01_easy_upstream_20250719_235358_trajectory.txt
+  * Converted: f_MH_01_easy_optimized_20250719_235732_trajectory.txt
+  * Converted: f_MH_02_easy_upstream_20250720_000104_trajectory.txt
+  * Converted: f_MH_02_easy_optimized_20250720_000401_trajectory.txt
+  * Converted: f_MH_03_medium_upstream_20250720_000657_trajectory.txt
+  * Converted: f_MH_03_medium_optimized_20250720_000938_trajectory.txt
+  * Converted: f_MH_04_difficult_upstream_20250720_001219_trajectory.txt
+  * Converted: f_MH_04_difficult_optimized_20250720_001423_trajectory.txt
+  * Converted: f_MH_05_difficult_upstream_20250720_090959_trajectory.txt
+  * Converted: f_MH_05_difficult_optimized_20250720_091212_trajectory.txt
+  * Converted: f_V1_01_easy_upstream_20250720_091429_trajectory.txt
+  * Converted: f_V1_01_easy_optimized_20250720_091719_trajectory.txt
+  * Converted: f_V1_02_medium_upstream_20250720_092010_trajectory.txt
+  * Converted: f_V1_02_medium_optimized_20250720_092205_trajectory.txt
+  * Converted: f_V1_03_difficult_upstream_20250720_092353_trajectory.txt
+  * Converted: f_V1_03_difficult_optimized_20250720_092607_trajectory.txt
+  * Converted: f_V2_01_easy_upstream_20250720_092816_trajectory.txt
+  * Converted: f_V2_01_easy_optimized_20250720_093038_trajectory.txt
+  * Converted: f_V2_02_medium_upstream_20250720_093254_trajectory.txt
+  * Converted: f_V2_02_medium_optimized_20250720_093517_trajectory.txt
+  * Converted: f_MH_01_easy_upstream_20250727_121112_trajectory.txt
+  * Converted: f_MH_01_easy_optimized_20250727_121449_trajectory.txt
+  * Converted: f_MH_02_easy_upstream_20250727_121822_trajectory.txt
+  * Converted: f_MH_02_easy_optimized_20250727_122123_trajectory.txt
+  * Converted: f_MH_03_medium_upstream_20250727_122422_trajectory.txt
+  * Converted: f_MH_03_medium_optimized_20250727_122709_trajectory.txt
+  * Converted: f_MH_04_difficult_upstream_20250727_122952_trajectory.txt
+  * Converted: f_MH_04_difficult_optimized_20250727_123157_trajectory.txt
+  * Converted: f_MH_05_difficult_upstream_20250727_123401_trajectory.txt
+  * Converted: f_MH_05_difficult_optimized_20250727_123623_trajectory.txt
+  * Converted: f_V1_01_easy_upstream_20250727_123843_trajectory.txt
+  * Converted: f_V1_01_easy_optimized_20250727_124142_trajectory.txt
+  * Converted: f_V1_02_medium_upstream_20250727_124437_trajectory.txt
+  * Converted: f_V1_02_medium_optimized_20250727_124632_trajectory.txt
+  * Converted: f_V1_03_difficult_upstream_20250727_124828_trajectory.txt
+  * Converted: f_V1_03_difficult_optimized_20250727_125046_trajectory.txt
+  * Converted: f_V2_01_easy_upstream_20250727_125300_trajectory.txt
+  * Converted: f_V2_01_easy_optimized_20250727_125520_trajectory.txt
+  * Converted: f_V2_02_medium_upstream_20250727_125739_trajectory.txt
+  * Converted: f_V2_02_medium_optimized_20250727_130004_trajectory.txt
+  * Converted: f_MH_01_easy_upstream_20250728_162441_trajectory.txt
+  * Converted: f_MH_01_easy_upstream_20250728_163051_trajectory.txt
+  * Converted: f_MH_01_easy_optimized_20250728_163454_trajectory.txt
+  * Converted: f_MH_02_easy_upstream_20250728_163859_trajectory.txt
+  * Converted: f_MH_02_easy_optimized_20250728_164227_trajectory.txt
+  * Converted: f_MH_03_medium_upstream_20250728_164550_trajectory.txt
+  * Converted: f_MH_03_medium_optimized_20250728_164858_trajectory.txt
+  * Converted: f_MH_04_difficult_upstream_20250728_165212_trajectory.txt
+  * Converted: f_MH_04_difficult_optimized_20250728_165443_trajectory.txt
+  * Converted: f_MH_05_difficult_upstream_20250728_165710_trajectory.txt
+  * Converted: f_MH_05_difficult_optimized_20250728_173921_trajectory.txt
+  * Converted: f_V1_01_easy_upstream_20250728_174156_trajectory.txt
+  * Converted: f_V1_01_easy_optimized_20250728_174505_trajectory.txt
+  * Converted: f_V1_02_medium_upstream_20250728_174813_trajectory.txt
+  * Converted: f_V1_02_medium_optimized_20250728_175016_trajectory.txt
+  * Converted: f_V1_03_difficult_upstream_20250728_175217_trajectory.txt
+  * Converted: f_V1_03_difficult_optimized_20250728_175445_trajectory.txt
+  * Converted: f_V2_01_easy_upstream_20250728_175710_trajectory.txt
+  * Converted: f_V2_01_easy_optimized_20250728_175945_trajectory.txt
+  * Converted: f_V2_02_medium_upstream_20250728_180217_trajectory.txt
+  * Converted: f_V2_02_medium_optimized_20250728_180451_trajectory.txt
+  * Converted: f_MH_01_easy_upstream_20250809_191750_trajectory.txt
+  * Converted: f_MH_01_easy_optimized_20250809_192138_trajectory.txt
+  * Converted: f_MH_02_easy_upstream_20250809_192518_trajectory.txt
+  * Converted: f_MH_02_easy_optimized_20250809_192815_trajectory.txt
+  * Converted: f_MH_03_medium_upstream_20250809_193208_trajectory.txt
+  * Converted: f_MH_01_easy_upstream_20250811_213457_trajectory.txt
+  * Converted: f_MH_01_easy_optimized_20250811_213827_trajectory.txt
+  * Converted: f_MH_02_easy_upstream_20250811_214156_trajectory.txt
+  * Converted: f_MH_02_easy_optimized_20250811_214455_trajectory.txt
+  * Converted: f_MH_03_medium_upstream_20250811_214750_trajectory.txt
+  * Converted: f_MH_03_medium_optimized_20250811_215030_trajectory.txt
+  * Converted: f_MH_04_difficult_upstream_20250811_215307_trajectory.txt
+  * Converted: f_MH_04_difficult_optimized_20250811_215511_trajectory.txt
+  * Converted: f_MH_05_difficult_upstream_20250811_215713_trajectory.txt
+  * Converted: f_MH_05_difficult_optimized_20250811_215930_trajectory.txt
+  * Converted: f_V1_01_easy_upstream_20250811_220146_trajectory.txt
+  * Converted: f_V1_01_easy_optimized_20250811_220438_trajectory.txt
+  * Converted: f_V1_02_medium_upstream_20250811_220727_trajectory.txt
+  * Converted: f_V1_02_medium_optimized_20250811_220915_trajectory.txt
+  * Converted: f_V1_03_difficult_upstream_20250811_221101_trajectory.txt
+  * Converted: f_V1_03_difficult_optimized_20250811_221311_trajectory.txt
+  * Converted: f_V2_01_easy_upstream_20250811_221519_trajectory.txt
+  * Converted: f_V2_01_easy_optimized_20250811_221738_trajectory.txt
+  * Converted: f_V2_02_medium_upstream_20250811_221954_trajectory.txt
+  * Converted: f_V2_02_medium_optimized_20250811_222215_trajectory.txt
+  * Converted: f_MH_01_easy_upstream_20250818_192529_trajectory.txt
+  * Converted: f_MH_01_easy_upstream_20250818_193237_trajectory.txt
+  * Converted: f_MH_01_easy_upstream-v1.0_20250818_200230_trajectory.txt
+  * Converted: f_MH_01_easy_optimized_20250818_200605_trajectory.txt
+  * Converted: f_MH_01_easy_upstream_20250818_202710_trajectory.txt
+  * Converted: f_MH_01_easy_upstream-v1.0_20250818_203044_trajectory.txt
+  * Converted: f_MH_01_easy_upstream_20250818_203738_trajectory.txt
+  * Converted: f_MH_01_easy_upstream-v1.0_20250818_204114_trajectory.txt
+  * Converted: f_MH_01_easy_upstream-v1.0_20250818_205841_trajectory.txt
+  * Converted: f_MH_01_easy_upstream-v1.0_20250819_063817_trajectory.txt
+  * Converted: f_MH_01_easy_upstream-v0.4-beta_20250819_064153_trajectory.txt
+
+Benchmark results saved to: compare_dashboard_pair.json
+   Total results: 97
+   Sequences: 10
+   Versions: 2
+
+Quick Summary:
+   Baseline avg runtime: 281190.8ms
+   Optimized avg runtime: 287407.8ms
+   Improvement: -2.2%
+
+Ready for dashboard: python3 results_dashboard.py compare_dashboard_pair.json

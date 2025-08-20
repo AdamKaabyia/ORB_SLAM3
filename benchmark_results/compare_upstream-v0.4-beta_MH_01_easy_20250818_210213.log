@@ -1,0 +1,33 @@
+Auto-detected timestamp file: /opt/orb-slam3/Examples/Monocular/EuRoC_TimeStamps/MH01.txt
+Estimated total frames: 3,682
+╭────────────────────────────────────── Starting SLAM Processing ──────────────────────────────────────╮
+│ ORB-SLAM3 Real-Time Monitor                                                                          │
+│ Container: upstream-v0.4-beta                                                                        │
+│ Sequence: datasets/EuRoC/machine_hall/MH_01_easy                                                     │
+│ Expected frames: 3,682                                                                               │
+│ Output files: f_MH_01_easy_upstream-v0.4-beta_20250818_210213_trajectory.txt,                        │
+│ kf_MH_01_easy_upstream-v0.4-beta_20250818_210213_trajectory.txt                                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯
+Status: Starting... [0s]Status: Starting... [0s]
+ORB-SLAM3: time="2025-08-18T21:02:13+03:00" level=warning msg="Failed, retrying in 1s ... (1/3). Error: 
+initializing source docker://localhost/orb-slam3:upstream-v0.4-beta: pinging container registry 
+localhost: Get \"https://localhost/v2/\": dial tcp [::1]:443: connect: connection refused"
+Status: Starting... [1s]
+ORB-SLAM3: time="2025-08-18T21:02:14+03:00" level=warning msg="Failed, retrying in 1s ... (2/3). Error: 
+initializing source docker://localhost/orb-slam3:upstream-v0.4-beta: pinging container registry 
+localhost: Get \"https://localhost/v2/\": dial tcp [::1]:443: connect: connection refused"
+Status: Starting... [2s]
+ORB-SLAM3: time="2025-08-18T21:02:15+03:00" level=warning msg="Failed, retrying in 1s ... (3/3). Error: 
+initializing source docker://localhost/orb-slam3:upstream-v0.4-beta: pinging container registry 
+localhost: Get \"https://localhost/v2/\": dial tcp [::1]:443: connect: connection refused"
+Status: Starting... [3s]
+ORB-SLAM3: Error: internal error: unable to copy from source 
+docker://localhost/orb-slam3:upstream-v0.4-beta: initializing source 
+docker://localhost/orb-slam3:upstream-v0.4-beta: pinging container registry localhost: Get 
+"https://localhost/v2/": dial tcp [::1]:443: connect: connection refused
+
+╭────────────────── Error ───────────────────╮
+│ Processing Failed                          │
+│ Exit code: 125                             │
+│ Check results directory for partial output │
+╰────────────────────────────────────────────╯

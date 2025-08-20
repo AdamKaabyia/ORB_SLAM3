@@ -195,10 +195,20 @@ class TrajectoryConverter:
             ate_rmse=0.08 + (0.02 if metadata['version'] == 'upstream' else 0.0)
         )
 
+        # Normalize version labels for dashboard grouping
+        raw_version = metadata['version']
+        if raw_version.startswith('upstream'):
+            norm_version = 'baseline'
+        elif raw_version in ('optimized', 'our local version'):
+            norm_version = 'optimized'
+        else:
+            # Treat all non-upstream as optimized for comparison purposes
+            norm_version = 'optimized'
+
         return BenchmarkResult(
             timestamp=metadata['timestamp'].isoformat(),
             sequence=metadata['sequence'].replace('_', '/'),
-            version="baseline" if metadata['version'] == 'upstream' else "optimized",
+            version=norm_version,
             run_number=1,
             success=True,
             total_runtime_ms=runtime_ms,

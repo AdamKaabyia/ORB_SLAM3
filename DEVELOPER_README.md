@@ -77,7 +77,7 @@ ORB_SLAM3/
 
 4. **Build Containers**
    ```bash
-   ./build.sh                    # Build optimized version
+   ./build.sh                    # Build our local version (optimized)
    ./container-dev.sh --build    # Build development environment
    ```
 
@@ -142,7 +142,7 @@ python3 orbslam3_cli.py benchmark
 
 #### **ground_truth_comparison.py**
 - Accuracy evaluation against reference trajectories
-- Compares upstream vs optimized versions
+- Compares upstream vs our local version
 - Uses real ATE (Absolute Trajectory Error) metrics
 - Integrates with existing evaluation tools
 
@@ -177,6 +177,56 @@ python3 results_dashboard.py --results-file analysis.json
 # Export reports
 python3 results_dashboard.py --results-file analysis.json --export-report
 ```
+
+## Version Comparison Toolkit
+
+Container-based comparator to evaluate upstream refs, forks, and our local version.
+
+### Building upstream refs (Alpine)
+
+```bash
+# Release tags
+ORBSLAM_REF=v0.2-beta python3 cross-platform-dev.py build-upstream
+podman tag localhost/orb-slam3:upstream localhost/orb-slam3:upstream-v0.2-beta
+
+ORBSLAM_REF=v0.3-beta python3 cross-platform-dev.py build-upstream
+podman tag localhost/orb-slam3:upstream localhost/orb-slam3:upstream-v0.3-beta
+
+ORBSLAM_REF=v0.4-beta python3 cross-platform-dev.py build-upstream
+podman tag localhost/orb-slam3:upstream localhost/orb-slam3:upstream-v0.4-beta
+
+ORBSLAM_REF=v1.0 python3 cross-platform-dev.py build-upstream
+podman tag localhost/orb-slam3:upstream localhost/orb-slam3:upstream-v1.0
+
+# Master
+ORBSLAM_REF=master python3 cross-platform-dev.py build-upstream
+podman tag localhost/orb-slam3:upstream localhost/orb-slam3:upstream-master
+```
+
+### Compare versions
+
+```bash
+# Live streaming logs
+PYTHONUNBUFFERED=1 RICH_FORCE_TERMINAL=1 \
+python3 compare_versions.py --runs 1 --sequences MH_01_easy \
+  --versions upstream-v1.0 our-local
+
+# Arbitrary tags (forks/branches)
+python3 compare_versions.py --runs 1 --sequences MH_01_easy \
+  --versions upstream-v0.4-beta upstream-master
+
+# Include local (host build) if present
+python3 compare_versions.py --include-local --versions our-local upstream-v1.0 --sequences MH_01_easy
+```
+
+### Interactive comparison via CLI
+
+```bash
+python3 orbslam3_cli.py compare
+```
+
+- Pick any two versions (container tags, optional `local`).
+- Missing `upstream-<ref>` tags are auto-built using `ORBSLAM_REF`.
 
 #### **4. Ground Truth Evaluation**
 ```bash

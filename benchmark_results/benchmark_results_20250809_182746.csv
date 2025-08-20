@@ -1,0 +1,1 @@
+timestamp,sequence,version,run_number,success,total_runtime_ms,cpu_percent_avg,memory_mb_peak,processed_frames,lost_frames,keyframes_created,rmse_translation,rmse_rotation,ate_rmse

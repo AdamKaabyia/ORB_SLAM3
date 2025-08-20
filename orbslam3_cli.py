@@ -18,12 +18,14 @@ import subprocess
 import platform
 import argparse
 import json
+import re
 from pathlib import Path
 
 class ORBSlam3CLI:
     def __init__(self):
         self.platform = platform.system()
         self.workspace = Path.cwd()
+        self.common_upstream_refs = ["v0.2-beta", "v0.3-beta", "v0.4-beta", "v1.0", "master"]
 
     def print_banner(self):
         """Display the application banner"""
@@ -100,6 +102,497 @@ class ORBSlam3CLI:
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
 
         return result
+
+    def build_upstream_ref(self, ref: str, tag: str = None) -> bool:
+        """Build upstream container for a given ref and tag it as upstream-<ref> (or provided tag)."""
+        runtime = self.detect_container_runtime()
+        if not runtime:
+            print("[ERROR] No container runtime found. Please install Docker or Podman.")
+            return False
+
+        env = os.environ.copy()
+        env["ORBSLAM_REF"] = ref
+        print(f"[INFO] Building upstream ref: {ref}")
+        result = subprocess.run("python3 cross-platform-dev.py build-upstream", shell=True, env=env)
+        if result.returncode != 0:
+            print(f"[ERROR] Failed to build upstream ref {ref}")
+            return False
+
+        version_tag = tag if tag else f"upstream-{ref}"
+        tag_cmd = f"{runtime} tag localhost/orb-slam3:upstream localhost/orb-slam3:{version_tag}"
+        tag_res = subprocess.run(tag_cmd, shell=True)
+        if tag_res.returncode != 0:
+            print(f"[ERROR] Failed to tag image as {version_tag}")
+            return False
+        print(f"[SUCCESS] Built and tagged: {version_tag}")
+        return True
+
+    def validate_git_ref(self, repo_url: str, ref: str) -> bool:
+        """Validate that a given ref exists in the remote repo (heads or tags)."""
+        try:
+            # Try exact ref; if empty, try as heads/tags explicitly
+            res = subprocess.run([
+                "git", "ls-remote", "--heads", "--tags", repo_url, ref
+            ], capture_output=True, text=True)
+            return res.returncode == 0 and bool(res.stdout.strip())
+        except Exception:
+            return False
+
+    def _sanitize_tag(self, value: str) -> str:
+        """Sanitize a string to be a safe container tag component."""
+        safe = re.sub(r"[^a-zA-Z0-9_.-]", "-", value)
+        return safe.strip("-._") or "custom"
+
+    def build_custom_upstream(self, repo_url: str, ref: str, tag: str = None) -> tuple:
+        """Build using a custom upstream repo+ref. Returns (success, tag_name)."""
+        runtime = self.detect_container_runtime()
+        if not runtime:
+            print("[ERROR] No container runtime found. Please install Docker or Podman.")
+            return False, None
+
+        if not self.validate_git_ref(repo_url, ref):
+            print(f"[ERROR] Ref '{ref}' not found in repo {repo_url}")
+            return False, None
+
+        env = os.environ.copy()
+        env["ORBSLAM_REPO"] = repo_url
+        env["ORBSLAM_REF"] = ref
+        print(f"[INFO] Building custom upstream: repo={repo_url}, ref={ref}")
+        result = subprocess.run("python3 cross-platform-dev.py build-upstream", shell=True, env=env)
+        if result.returncode != 0:
+            print("[ERROR] Failed to build custom upstream")
+            return False, None
+
+        repo_base = os.path.splitext(os.path.basename(repo_url.rstrip("/")))[0]
+        auto_tag = tag or f"upstream-{self._sanitize_tag(repo_base)}-{self._sanitize_tag(ref)}"
+        tag_cmd = f"{runtime} tag localhost/orb-slam3:upstream localhost/orb-slam3:{auto_tag}"
+        tag_res = subprocess.run(tag_cmd, shell=True)
+        if tag_res.returncode != 0:
+            print(f"[ERROR] Failed to tag image as {auto_tag}")
+            return False, None
+        print(f"[SUCCESS] Built and tagged: {auto_tag}")
+        return True, auto_tag
+
+    def compare_upstream_build_and_run(self):
+        """Interactive: build two upstream refs and run comparison end-to-end."""
+        print("\n[COMPARE UPSTREAM VERSIONS - BUILD & RUN]")
+        print("Pick from common upstream refs or choose Other:")
+        for i, r in enumerate(self.common_upstream_refs, start=1):
+            print(f"  {i}. {r}")
+        print(f"  {len(self.common_upstream_refs)+1}. Other (enter manually or repo@ref)")
+
+        def pick_ref(label: str, default_idx: int) -> tuple:
+            choice = input(f"Select {label} [{default_idx}] ").strip()
+            if not choice:
+                return ("ref", self.common_upstream_refs[default_idx-1])
+            if choice.isdigit():
+                idx = int(choice)
+                if 1 <= idx <= len(self.common_upstream_refs):
+                    return ("ref", self.common_upstream_refs[idx-1])
+                elif idx == len(self.common_upstream_refs)+1:
+                    # Other
+                    value = input("Enter upstream ref or repo@ref: ").strip()
+                    if "@" in value and (value.startswith("http") or value.endswith(".git")):
+                        repo, ref = value.split("@", 1)
+                        return ("custom", (repo, ref))
+                    return ("ref", value or "master")
+            # Fallback: treat as ref text
+            return ("ref", choice)
+
+        kind_a, val_a = pick_ref("first ref", default_idx=4)  # default v1.0
+        kind_b, val_b = pick_ref("second ref", default_idx=5) # default master
+
+        # Optional options
+        seq = input("Sequence (default MH_01_easy, or 'all'): ").strip() or "MH_01_easy"
+        runs_str = input("Runs per version [1]: ").strip()
+        runs = int(runs_str) if runs_str.isdigit() and int(runs_str) > 0 else 1
+        export = input("Export dashboard JSON (filename or leave empty to skip): ").strip()
+
+        # Build both refs (handle custom repo@ref case)
+        if kind_a == "custom":
+            ok_a, tag_a = self.build_custom_upstream(val_a[0], val_a[1])
+            v_a = tag_a if ok_a else None
+        else:
+            ref_a = val_a
+            ok_a = self.build_upstream_ref(ref_a)
+            v_a = f"upstream-{ref_a}" if ok_a else None
+
+        if kind_b == "custom":
+            ok_b, tag_b = self.build_custom_upstream(val_b[0], val_b[1])
+            v_b = tag_b if ok_b else None
+        else:
+            ref_b = val_b
+            ok_b = self.build_upstream_ref(ref_b)
+            v_b = f"upstream-{ref_b}" if ok_b else None
+        if not (ok_a and ok_b):
+            print("[ERROR] One or both upstream builds failed. Aborting compare.")
+            return
+
+        # Form versions list (already assigned above)
+
+        # Build compare command
+        cmd_parts = [
+            "python3", "compare_versions.py",
+            "--runs", str(runs),
+            "--versions", v_a, v_b
+        ]
+        if seq.lower() != "all":
+            cmd_parts += ["--sequences", seq]
+        if export:
+            cmd_parts += ["--export-dashboard", export]
+
+        # Live streaming by default
+        env = os.environ.copy()
+        env["PYTHONUNBUFFERED"] = "1"
+        env["RICH_FORCE_TERMINAL"] = "1"
+        print("\n[INFO] Starting comparison...")
+        print("Command:", " ".join(cmd_parts))
+        subprocess.run(" ".join(cmd_parts), shell=True, env=env)
+
+    def one_shot_compare(self):
+        """Single interface: pick/enter versions (with validation), build if needed, compare, and show dashboard."""
+        print("\n[ONE-SHOT COMPARE]")
+        print("You can:\n  - Pick a preset: 1) v0.2-beta  2) v0.3-beta  3) v0.4-beta  4) v1.0  5) master\n  - Type an existing tag (e.g., optimized, upstream-v1.0)\n  - Type an upstream ref (e.g., v1.0)\n  - Enter a repo with @ref (e.g., https://github.com/UZ-SLAMLab/ORB_SLAM3.git@v1.0)")
+        # Show available tags
+        avail = self._list_available_versions()
+        if avail:
+            print("\nAvailable local image tags:")
+            print("  ", ", ".join(avail))
+
+        def read_version_input(label: str, default_value: str) -> str:
+            value = input(f"{label} (default {default_value}): ").strip()
+            if not value:
+                return default_value
+            if value.isdigit():
+                idx = int(value)
+                if 1 <= idx <= len(self.common_upstream_refs):
+                    return f"upstream-{self.common_upstream_refs[idx-1]}"
+            return value
+
+        v1_in = read_version_input("Version A", "upstream-v1.0")
+        ok1, v1 = self._parse_version_input(v1_in)
+        if not ok1:
+            print(f"[ERROR] Could not resolve version A: {v1_in}")
+            return
+        v2_in = read_version_input("Version B", "optimized")
+        ok2, v2 = self._parse_version_input(v2_in)
+        if not ok2:
+            print(f"[ERROR] Could not resolve version B: {v2_in}")
+            return
+        if v1 == v2:
+            print("[ERROR] Please choose two different versions.")
+            return
+
+        seq = input("Sequence (default MH_01_easy, or 'all'): ").strip() or "MH_01_easy"
+        runs_str = input("Runs per version [1]: ").strip()
+        runs = int(runs_str) if runs_str.isdigit() and int(runs_str) > 0 else 1
+
+        # Ensure container tags exist
+        for tag in [v1, v2]:
+            if not self._ensure_or_confirm_build(tag):
+                print(f"[ERROR] Version '{tag}' is not available. Aborting.")
+                return
+
+        # Build compare command
+        out_json = f"compare_dashboard_{v1.replace(':','_')}_vs_{v2.replace(':','_')}.json"
+        cmd = [
+            "python3", "compare_versions.py",
+            "--runs", str(runs),
+            "--versions", v1, v2,
+            "--export-dashboard", out_json
+        ]
+        if seq.lower() != "all":
+            cmd += ["--sequences", seq]
+
+        env = os.environ.copy()
+        env["PYTHONUNBUFFERED"] = "1"
+        env["RICH_FORCE_TERMINAL"] = "1"
+
+        print("\n[INFO] Running comparison and exporting dashboard...")
+        print("Command:", " ".join(cmd))
+        subprocess.run(" ".join(cmd), shell=True, env=env)
+
+        # Show dashboard
+        print("\n[INFO] Rendering dashboard (non-interactive)...")
+        dash_cmd = f"python3 results_dashboard.py --results-file {out_json} --no-interactive"
+        subprocess.run(dash_cmd, shell=True)
+
+    def _detect_runtime_and_images(self):
+        """Return (runtime, images_json) where images_json is a list of dicts for orb-slam3 images"""
+        runtime = self.detect_container_runtime()
+        if not runtime:
+            print("[ERROR] No container runtime found. Please install Docker or Podman.")
+            return None, []
+
+        try:
+            result = subprocess.run([runtime, "images", "--format", "json"],
+                                    capture_output=True, text=True)
+            images = json.loads(result.stdout or "[]")
+        except Exception:
+            images = []
+
+        orb_images = []
+        for img in images:
+            names = img.get("Names") or []
+            for name in names:
+                if "orb-slam3:" in name:
+                    orb_images.append({"name": name, **img})
+        return runtime, orb_images
+
+    def _list_available_versions(self) -> list:
+        """List available container version tags plus optional 'local' if host binary exists."""
+        _, orb_images = self._detect_runtime_and_images()
+        tags = []
+        for img in orb_images:
+            # Names entries look like 'localhost/orb-slam3:optimized'
+            for name in img.get("Names", []):
+                if ":" in name:
+                    tag = name.split(":", 1)[1]
+                    if tag not in tags:
+                        tags.append(tag)
+        # Prefer to show stable/common first if available
+        ordered = []
+        for preferred in ["optimized", "upstream"]:
+            if preferred in tags:
+                ordered.append(preferred)
+        ordered += [t for t in tags if t not in ordered]
+
+        # Add 'local' option if host binary exists
+        local_bin = self.workspace / "build/Examples/Monocular/mono_euroc"
+        if local_bin.exists():
+            ordered.append("local")
+        return ordered
+
+    def _ensure_container_tag(self, desired_tag: str) -> bool:
+        """Ensure a given container tag exists; build it if it's an upstream-* alias.
+
+        Supported patterns:
+          - optimized, upstream (must already exist or be built via build command)
+          - upstream-<ref> (e.g., upstream-v1.0, upstream-v0.3-beta, upstream-master)
+        Returns True if available or built successfully.
+        """
+        runtime, orb_images = self._detect_runtime_and_images()
+        if not runtime:
+            return False
+
+        # Already present?
+        existing = set()
+        for img in orb_images:
+            for name in img.get("Names", []):
+                if ":" in name:
+                    existing.add(name.split(":", 1)[1])
+        if desired_tag in existing:
+            return True
+
+        # Build upstream-<ref> on demand
+        if desired_tag.startswith("upstream-"):
+            ref = desired_tag[len("upstream-"):]
+            env = os.environ.copy()
+            env["ORBSLAM_REF"] = ref
+            # Build upstream image (temporary tag: upstream)
+            print(f"[INFO] Building upstream container for ref '{ref}'...")
+            result = subprocess.run("python3 cross-platform-dev.py build-upstream", shell=True, env=env)
+            if result.returncode != 0:
+                print(f"[ERROR] Failed to build upstream ref {ref}")
+                return False
+            # Tag it to upstream-<ref>
+            tag_cmd = f"{runtime} tag localhost/orb-slam3:upstream localhost/orb-slam3:{desired_tag}"
+            tag_res = subprocess.run(tag_cmd, shell=True)
+            if tag_res.returncode != 0:
+                print(f"[ERROR] Failed to tag image as {desired_tag}")
+                return False
+            return True
+
+        # Otherwise, we don't auto-build here
+        print(f"[WARNING] Container tag '{desired_tag}' not found. Build it first.")
+        return False
+
+    def _parse_version_input(self, user_value: str) -> tuple:
+        """Parse a version spec which may be:
+        - existing container tag (optimized, upstream, upstream-<ref>, etc.)
+        - 'local'
+        - '<repo_url>@<ref>' or '<repo_url>' then prompt for ref
+        Returns (ok, resolved_tag). If custom repo/ref, it will build and return resulting tag.
+        """
+        value = user_value.strip()
+        # Custom repo@ref inline
+        if "@" in value and (value.startswith("http://") or value.startswith("https://") or value.endswith(".git")):
+            repo, ref = value.split("@", 1)
+            if not self.validate_git_ref(repo, ref):
+                print(f"[ERROR] Ref '{ref}' not found in repo {repo}")
+                return False, None
+            # Ask to build now
+            if self.confirm(f"Build custom image for {repo}@{ref}?"):
+                ok, tag = self.build_custom_upstream(repo, ref)
+                return ok, tag
+            return False, None
+        # Custom repo only, prompt for ref
+        if (value.startswith("http://") or value.startswith("https://") or value.endswith(".git")):
+            ref = input("Enter ref to build from this repo (e.g., v1.0, master): ").strip() or "master"
+            if not self.validate_git_ref(value, ref):
+                print(f"[ERROR] Ref '{ref}' not found in repo {value}")
+                return False, None
+            if self.confirm(f"Build custom image for {value}@{ref}?"):
+                ok, tag = self.build_custom_upstream(value, ref)
+                return ok, tag
+            return False, None
+        # Local
+        if value == "local":
+            return True, "local"
+        # Existing or upstream-<ref>
+        if value.startswith("upstream-"):
+            # Do not auto-build here; caller will ensure/build with confirmation
+            return True, value
+        # If plain ref, try upstream-<ref>
+        # Resolve to upstream-<ref>, caller will decide to build
+        tentative = f"upstream-{value}"
+        return True, tentative
+        # Fall back to checking existing tags
+        available = set(self._list_available_versions())
+        if value in available:
+            return True, value
+        return False, None
+
+    def _ensure_or_confirm_build(self, tag: str) -> bool:
+        """Ensure the given image tag exists; if missing and buildable, ask for confirmation and build."""
+        if tag == "local":
+            return True
+
+        runtime, orb_images = self._detect_runtime_and_images()
+        if not runtime:
+            return False
+
+        existing = set()
+        for img in orb_images:
+            for name in img.get("Names", []):
+                if ":" in name:
+                    existing.add(name.split(":", 1)[1])
+        if tag in existing:
+            return True
+
+        if tag.startswith("upstream-"):
+            ref = tag[len("upstream-"):]
+            if self.confirm(f"Image '{tag}' not found. Build upstream ref '{ref}' now?"):
+                return self._ensure_container_tag(tag)
+            return False
+
+        print(f"[WARNING] Image '{tag}' not found and cannot auto-build.")
+        return False
+
+    def build_common_versions(self):
+        """Build and tag common upstream versions for comparison (Alpine-based)."""
+        print("\n[BUILD COMMON VERSIONS]")
+        common_refs = ["v0.2-beta", "v0.3-beta", "v0.4-beta", "v1.0", "master"]
+        runtime = self.detect_container_runtime()
+        if not runtime:
+            print("[ERROR] No container runtime found.")
+            return
+        for ref in common_refs:
+            env = os.environ.copy()
+            env["ORBSLAM_REF"] = ref
+            print(f"\n[INFO] Building upstream ref: {ref}")
+            res = subprocess.run("python3 cross-platform-dev.py build-upstream", shell=True, env=env)
+            if res.returncode != 0:
+                print(f"[ERROR] Build failed for ref {ref}")
+                continue
+            # Tag as upstream-<ref>
+            tag = f"upstream-{ref}"
+            tag_cmd = f"{runtime} tag localhost/orb-slam3:upstream localhost/orb-slam3:{tag}"
+            tag_res = subprocess.run(tag_cmd, shell=True)
+            if tag_res.returncode == 0:
+                print(f"[SUCCESS] Tagged as {tag}")
+            else:
+                print(f"[ERROR] Failed to tag image as {tag}")
+
+    def compare_versions_interactive(self):
+        """Interactive selector to compare any two versions (containers and optional local)."""
+        print("\n[COMPARE VERSIONS]")
+        versions = self._list_available_versions()
+        if versions:
+            print("Available versions (container tags):")
+            for idx, v in enumerate(versions, start=1):
+                print(f"  {idx}. {v}")
+        else:
+            print("[INFO] No local images yet. You can enter repo@ref (e.g., https://github.com/UZ-SLAMLab/ORB_SLAM3.git@v1.0)")
+
+        def prompt_version(label: str) -> str:
+            prompt = f"Select {label} by number, tag, upstream ref, or repo@ref: "
+            while True:
+                value = input(prompt).strip()
+                if not value and versions:
+                    print("Please enter a choice.")
+                    continue
+                # If numeric and in range, map to tag
+                if value.isdigit() and versions and 1 <= int(value) <= len(versions):
+                    return versions[int(value)-1]
+                # Otherwise treat as free-form and try to resolve
+                ok, resolved = self._parse_version_input(value)
+                if ok and resolved:
+                    return resolved
+                print("Could not resolve that version. Try again.")
+
+        v1 = prompt_version("version A")
+        while True:
+            v2 = prompt_version("version B")
+            if v2 != v1:
+                break
+            print("Please choose a different second version.")
+
+        # Ensure selected container tags exist (confirm before building)
+        for tag in [v1, v2]:
+            if not self._ensure_or_confirm_build(tag):
+                print(f"[ERROR] Version '{tag}' is not available. Aborting.")
+                return
+
+        # Sequence selection
+        dataset_cfg = self.workspace / "datasets/EuRoC/dataset_config.json"
+        seq_options = []
+        if dataset_cfg.exists():
+            try:
+                with open(dataset_cfg) as f:
+                    data = json.load(f)
+                for location, seqs in data.get("datasets", {}).items():
+                    for seq_name in seqs.keys():
+                        seq_options.append(f"{seq_name}")
+            except Exception:
+                pass
+        # Fallback minimal list
+        if not seq_options:
+            seq_options = ["MH_01_easy", "V1_01_easy"]
+
+        print("\nSequences (enter to accept default):")
+        print("  default: MH_01_easy")
+        print("  examples:", ", ".join(seq_options[:8]))
+        seq_input = input("Sequence name (one), or 'all' for all available [MH_01_easy]: ").strip()
+        if not seq_input:
+            seq_input = "MH_01_easy"
+
+        # Runs per version
+        runs_input = input("Runs per version [1]: ").strip()
+        runs = 1
+        if runs_input.isdigit() and int(runs_input) > 0:
+            runs = int(runs_input)
+
+        # Build command
+        include_local = False
+        versions_arg = []
+        for v in [v1, v2]:
+            if v == "local":
+                include_local = True
+            else:
+                versions_arg.append(v)
+
+        cmd = ["python3", "compare_versions.py", "--runs", str(runs)]
+        if seq_input.lower() != "all":
+            cmd += ["--sequences", seq_input]
+        if include_local:
+            cmd.append("--include-local")
+        if versions_arg:
+            cmd += ["--versions"] + versions_arg
+
+        # Execute
+        print("\nStarting comparison...")
+        self.run_command(" ".join(cmd), "Comparing selected versions")
 
     def get_user_choice(self, prompt, choices, default=None):
         """Get user input with validation"""
@@ -205,8 +698,8 @@ class ORBSlam3CLI:
         # Ask user what to build
         build_options = [
             ("1", "baseline", "Build upstream baseline ORB-SLAM3"),
-            ("2", "optimized", "Build with our performance optimizations"),
-            ("3", "both", "Build both baseline and optimized versions"),
+            ("2", "optimized", "Build our local version (optimized)"),
+            ("3", "both", "Build both baseline and our local version"),
             ("4", "skip", "Skip building (use existing containers)")
         ]
 
@@ -392,6 +885,10 @@ class ORBSlam3CLI:
                 ("4", "benchmark", "Run benchmarks and performance tests"),
                 ("5", "results", "View results dashboard and analysis"),
                 ("6", "dev", "Launch development environment"),
+                ("7", "compare", "Compare versions (interactive picker)"),
+                ("8", "compare-upstream", "Build two upstream refs and compare"),
+                ("9", "build-common", "Build common upstream versions (v0.2/0.3/0.4/v1.0/master)"),
+                ("10", "one-shot", "One-shot: ensure images, compare, export & show dashboard"),
                 ("0", "quit", "Exit application")
             ]
 
@@ -421,6 +918,14 @@ class ORBSlam3CLI:
                 self.view_results()
             elif command == "dev":
                 self.development_environment()
+            elif command == "compare":
+                self.compare_versions_interactive()
+            elif command == "compare-upstream":
+                self.compare_upstream_build_and_run()
+            elif command == "build-common":
+                self.build_common_versions()
+            elif command == "one-shot":
+                self.one_shot_compare()
 
             if command != "status":
                 input("\nPress Enter to continue...")
@@ -442,7 +947,7 @@ Examples:
     )
 
     parser.add_argument('command', nargs='?',
-                       choices=['status', 'scrape', 'build', 'benchmark', 'results', 'dev'],
+                       choices=['status', 'scrape', 'build', 'benchmark', 'results', 'dev', 'compare', 'compare-upstream', 'build-common', 'one-shot'],
                        help='Command to execute (default: interactive mode)')
 
     args = parser.parse_args()
@@ -467,8 +972,19 @@ Examples:
             cli.run_benchmarks()
         elif args.command == 'results':
             cli.view_results()
+        elif args.command == 'compare':
+            # Run comparator with defaults (1 run each on all sequences, include local if available)
+            cli.compare_versions_interactive()
         elif args.command == 'dev':
             cli.development_environment()
+        elif args.command == 'compare':
+            cli.compare_versions_interactive()
+        elif args.command == 'compare-upstream':
+            cli.compare_upstream_build_and_run()
+        elif args.command == 'build-common':
+            cli.build_common_versions()
+        elif args.command == 'one-shot':
+            cli.one_shot_compare()
     else:
         # Interactive mode
         cli.interactive_mode()

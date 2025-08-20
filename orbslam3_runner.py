@@ -399,7 +399,7 @@ class ORBSLAMRunner:
         print(f"Starting benchmark suite:")
         print(f"  Sequences: {len(sequences)}")
         print(f"  Runs per sequence: {runs_per_sequence}")
-        print(f"  Versions: baseline, optimized")
+        print(f"  Versions: baseline, our local version")
         print(f"  Total runs: {total_runs}")
         print()
 
@@ -423,7 +423,7 @@ class ORBSLAMRunner:
                 print(f"    Progress: {completed_runs}/{total_runs} ({100*completed_runs/total_runs:.1f}%)")
 
             # Run optimized version
-            print(f"Building optimized version...")
+            print(f"Building our local version...")
             if not self.build_version("optimized"):
                 print(f"Skipping {sequence_name} optimized - build failed")
                 continue
@@ -434,7 +434,7 @@ class ORBSLAMRunner:
                 completed_runs += 1
 
                 success_indicator = "*" if result.success else "!"
-                print(f"  {success_indicator} Optimized run {run+1}/{runs_per_sequence} - {result.total_runtime_ms:.1f}ms")
+                print(f"  {success_indicator} Our local run {run+1}/{runs_per_sequence} - {result.total_runtime_ms:.1f}ms")
                 print(f"    Progress: {completed_runs}/{total_runs} ({100*completed_runs/total_runs:.1f}%)")
 
             # Quick comparison for this sequence
@@ -562,7 +562,10 @@ def main():
     print(f"\n=== Benchmark Summary ===")
     print(f"Total runs: {len(results)}")
     print(f"Successful runs: {len(successful_results)}")
-    print(f"Success rate: {100*len(successful_results)/len(results):.1f}%")
+    if len(results) > 0:
+        print(f"Success rate: {100*len(successful_results)/len(results):.1f}%")
+    else:
+        print("Success rate: 0.0% (no runs completed)")
 
     if baseline_results and optimized_results:
         baseline_avg = statistics.mean([r.total_runtime_ms for r in baseline_results])
@@ -571,7 +574,7 @@ def main():
 
         print(f"\nPerformance Comparison:")
         print(f"Baseline average: {baseline_avg:.1f}ms")
-        print(f"Optimized average: {optimized_avg:.1f}ms")
+        print(f"Our local average: {optimized_avg:.1f}ms")
         print(f"Overall improvement: {improvement:+.1f}%")
 
     return 0

@@ -128,6 +128,13 @@ class ResultsDashboard:
                 total_runs = self.results_data['metadata']['total_runs']
                 successful_runs = self.results_data['metadata']['successful_runs']
                 subtitle += f"\n[dim]{successful_runs}/{total_runs} successful runs[/dim]"
+                try:
+                    labels = self.results_data.get("metadata", {}).get("labels", {})
+                    if labels:
+                        subtitle += f"\n[dim]Baseline: {labels.get('baseline','Baseline')}[/dim]"
+                        subtitle += f"\n[dim]Improved: {labels.get('optimized','Optimized')}[/dim]"
+                except Exception:
+                    pass
             else:
                 subtitle = "[dim]No results loaded[/dim]"
 
@@ -161,11 +168,22 @@ class ResultsDashboard:
             ("RMSE Rotation", "accuracy_metrics.rmse_rotation", "°", True)
         ]
 
+        # Dynamic labels (if provided in metadata)
+        baseline_label = "Baseline"
+        optimized_label = "Optimized"
+        try:
+            if "metadata" in self.results_data and "labels" in self.results_data["metadata"]:
+                labels = self.results_data["metadata"]["labels"]
+                baseline_label = labels.get("baseline", baseline_label)
+                optimized_label = labels.get("optimized", optimized_label)
+        except Exception:
+            pass
+
         if RICH_AVAILABLE:
             table = Table(title="Performance Comparison Summary", box=box.ROUNDED)
-            table.add_column("Metric", style="cyan", width=15)
-            table.add_column("Baseline", style="white", justify="right")
-            table.add_column("Optimized", style="green", justify="right")
+            table.add_column("Metric", style="cyan", width=20)
+            table.add_column(baseline_label, style="white", justify="right")
+            table.add_column(optimized_label, style="green", justify="right")
             table.add_column("Improvement", style="yellow", justify="right")
             table.add_column("Significance", style="blue", justify="center")
 
@@ -208,7 +226,7 @@ class ResultsDashboard:
             self.console.print(table)
         else:
             print("\n=== Performance Comparison Summary ===")
-            print(f"{'Metric':<15} {'Baseline':<12} {'Optimized':<12} {'Improvement':<12}")
+            print(f"{'Metric':<20} {baseline_label:<12} {optimized_label:<12} {'Improvement':<12}")
             print("-" * 60)
 
             for name, path, unit, lower_is_better in metrics:
@@ -227,6 +245,17 @@ class ResultsDashboard:
         if not self.results_data:
             return
 
+        # Dynamic labels (if provided)
+        baseline_label = "Baseline"
+        optimized_label = "Optimized"
+        try:
+            if "metadata" in self.results_data and "labels" in self.results_data["metadata"]:
+                labels = self.results_data["metadata"]["labels"]
+                baseline_label = labels.get("baseline", baseline_label)
+                optimized_label = labels.get("optimized", optimized_label)
+        except Exception:
+            pass
+
         # Group results by sequence
         sequences = {}
         for result in self.baseline_results + self.optimized_results:
@@ -238,8 +267,8 @@ class ResultsDashboard:
         if RICH_AVAILABLE:
             table = Table(title="Per-Sequence Performance", box=box.ROUNDED)
             table.add_column("Sequence", style="cyan")
-            table.add_column("Baseline Avg (ms)", style="white", justify="right")
-            table.add_column("Optimized Avg (ms)", style="green", justify="right")
+            table.add_column(f"{baseline_label} Avg (ms)", style="white", justify="right")
+            table.add_column(f"{optimized_label} Avg (ms)", style="green", justify="right")
             table.add_column("Improvement", style="yellow", justify="right")
             table.add_column("Runs", style="blue", justify="center")
 
@@ -268,7 +297,7 @@ class ResultsDashboard:
             self.console.print(table)
         else:
             print("\n=== Per-Sequence Performance ===")
-            print(f"{'Sequence':<25} {'Baseline':<12} {'Optimized':<12} {'Improvement':<12}")
+            print(f"{'Sequence':<25} {baseline_label:<12} {optimized_label:<12} {'Improvement':<12}")
             print("-" * 70)
 
             for seq_name, seq_results in sorted(sequences.items()):

@@ -46,7 +46,7 @@ def run_command(cmd, command_type="build", version="optimized"):
     if version == "optimized":
         image_tag = "orb-slam3:optimized"
         dockerfile = "Dockerfile"
-        description = "our optimized container (Alpine-based)"
+        description = "our local version (Alpine-based)"
     else:  # upstream
         image_tag = "orb-slam3:upstream"
         dockerfile = "Dockerfile.upstream"
@@ -57,7 +57,14 @@ def run_command(cmd, command_type="build", version="optimized"):
     if command_type == "build":
         print(f"Building {description}...")
         start_time = time.time()
-        cmd = [engine, "build", "-f", dockerfile, "-t", image_tag, ".", "--progress=plain"]
+        # Support optional build-args via env:
+        #   ORBSLAM_REPO, ORBSLAM_REF, CXXFLAGS_ARG
+        cmd = [engine, "build", "-f", dockerfile, "-t", image_tag]
+        for arg_name in ["ORBSLAM_REPO", "ORBSLAM_REF", "CXXFLAGS_ARG"]:
+            arg_val = os.environ.get(arg_name)
+            if arg_val:
+                cmd.extend(["--build-arg", f"{arg_name}={arg_val}"])
+        cmd.extend([".", "--progress=plain"])
         result = subprocess.run(cmd)
 
         if result.returncode == 0:
@@ -107,9 +114,9 @@ def run_command(cmd, command_type="build", version="optimized"):
         print("-" * 50)
 
         if optimized_info:
-            print(f"{'Optimized':<12} {optimized_info['size']:<15} {'SUCCESS Built':<12} {optimized_info['id']}")
+            print(f"{'OurLocal':<12} {optimized_info['size']:<15} {'SUCCESS Built':<12} {optimized_info['id']}")
         else:
-            print(f"{'Optimized':<12} {'Not built':<15} {'ERROR Missing':<12} {'N/A'}")
+            print(f"{'OurLocal':<12} {'Not built':<15} {'ERROR Missing':<12} {'N/A'}")
 
         if upstream_info:
             print(f"{'Upstream':<12} {upstream_info['size']:<15} {'SUCCESS Built':<12} {upstream_info['id']}")
@@ -117,11 +124,11 @@ def run_command(cmd, command_type="build", version="optimized"):
             print(f"{'Upstream':<12} {'Not built':<15} {'ERROR Missing':<12} {'N/A'}")
 
         print("\nKey Differences:")
-        print("• Base OS: Ubuntu 22.04 (upstream) vs Alpine Linux (optimized)")
-        print("• Code: Original ORB-SLAM3 (upstream) vs Your optimized version")
-        print("• Compilation: -O0 no optimization (upstream) vs -O3 optimized (ours)")
-        print("• Dependencies: Full Pangolin/GUI (upstream) vs Headless optimized (ours)")
-        print("• Purpose: True baseline comparison vs Performance-optimized version")
+        print("• Base OS: Ubuntu 22.04 (upstream) vs Alpine Linux (our local version)")
+        print("• Code: Original ORB-SLAM3 (upstream) vs Our local version")
+        print("• Compilation: -O0 no optimization (upstream) vs -O3 (our local version)")
+        print("• Dependencies: Full Pangolin/GUI (upstream) vs Headless (our local version)")
+        print("• Purpose: True baseline comparison vs our local version")
         return
 
     subprocess.run(cmd)
@@ -146,7 +153,7 @@ if __name__ == "__main__":
         print("Usage: python cross-platform-dev.py [COMMAND] [VERSION]")
         print("")
         print("Build Commands:")
-        print("  build                    Build optimized container (default)")
+        print("  build                    Build our local version container (default)")
         print("  build-upstream           Build upstream baseline container")
         print("  build-optimized          Build optimized container")
         print("  build-both               Build both versions for comparison")
@@ -170,7 +177,7 @@ if __name__ == "__main__":
         print("Examples:")
         print("  python3 cross-platform-dev.py build-both")
         print("  python3 cross-platform-dev.py compare")
-        print("  python3 cross-platform-dev.py run optimized")
+        print("  python3 cross-platform-dev.py run optimized  # 'optimized' tag = our local version")
         print("  python3 cross-platform-dev.py run upstream")
         sys.exit(1)
 
@@ -184,7 +191,7 @@ if __name__ == "__main__":
 
     # Handle commands
     if command in ["build", "build-optimized"]:
-        print("Building optimized container with performance improvements...")
+        print("Building our local version container with performance improvements...")
         run_command(None, "build", "optimized")
     elif command == "build-upstream":
         print("Building upstream baseline container for comparison...")
