@@ -67,14 +67,31 @@ class ResultsDashboard:
                 self.results_data = json.load(f)
 
             # Separate baseline and optimized results
-            self.baseline_results = [
-                r for r in self.results_data["results"]
-                if r["version"] == "baseline" and r["success"]
-            ]
-            self.optimized_results = [
-                r for r in self.results_data["results"]
-                if r["version"] == "optimized" and r["success"]
-            ]
+            results = self.results_data.get("results", [])
+            # Try direct classification first
+            base = [r for r in results if r.get("version") == "baseline" and r.get("success")]
+            opt = [r for r in results if r.get("version") == "optimized" and r.get("success")]
+
+            # If empty, fallback to inferring from labels and/or command_line
+            if not base or not opt:
+                labels = self.results_data.get("metadata", {}).get("labels", {})
+                def strip_suffix(v: str) -> str:
+                    return v.split(" (")[0]
+                baseline_tag = strip_suffix(labels.get("baseline", ""))
+                optimized_tag = strip_suffix(labels.get("optimized", ""))
+                base, opt = [], []
+                for r in results:
+                    if not r.get("success"):
+                        continue
+                    rver = r.get("version", "")
+                    cmd = r.get("command_line", "")
+                    if (baseline_tag and (rver == baseline_tag or (isinstance(cmd, str) and baseline_tag in cmd))):
+                        base.append(r)
+                    elif (optimized_tag and (rver == optimized_tag or (isinstance(cmd, str) and optimized_tag in cmd)))):
+                        opt.append(r)
+
+            self.baseline_results = base
+            self.optimized_results = opt
 
             return True
 
