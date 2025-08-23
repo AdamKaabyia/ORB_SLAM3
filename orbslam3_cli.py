@@ -411,6 +411,8 @@ class ORBSlam3CLI:
             shutil.copy2(d, docs / d.name)
         for j in jsons:
             shutil.copy2(j, docs / j.name)
+        # Ensure Jekyll is disabled so Liquid doesn't parse content
+        (docs / ".nojekyll").write_text("")
 
         # Build items by reading JSON metadata
         items = []
