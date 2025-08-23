@@ -323,21 +323,7 @@ class ORBSlam3CLI:
     def full_one_shot_pipeline(self):
         """End-to-end: ensure datasets, build images as needed, compare, export HTML dashboard, print path."""
         print("\n[ONE-SHOT FULL PIPELINE]")
-        # 0. Clean existing results/ and benchmark_results JSON/trajectories (optional)
-        if self.confirm("Clean existing trajectories/results before running? This removes results/*.txt and benchmark_results/*.json"):
-            results_dir = self.workspace / "results"
-            for pattern in ["f_*_trajectory.txt", "kf_*_trajectory.txt"]:
-                for f in glob.glob(str(results_dir / pattern)):
-                    try:
-                        os.remove(f)
-                    except Exception:
-                        pass
-            br_dir = self.workspace / "benchmark_results"
-            for f in br_dir.glob("*.json"):
-                try:
-                    f.unlink()
-                except Exception:
-                    pass
+        # 0. Optional clean removed; we now always write to a per-run results dir to avoid mixing data
         # 1. Ensure datasets present (machine_hall at least)
         euroc_dir = self.workspace / "datasets/EuRoC/machine_hall/MH_01_easy"
         if not euroc_dir.exists():
