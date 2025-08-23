@@ -87,7 +87,7 @@ class ResultsDashboard:
                     cmd = r.get("command_line", "")
                     if (baseline_tag and (rver == baseline_tag or (isinstance(cmd, str) and baseline_tag in cmd))):
                         base.append(r)
-                    elif (optimized_tag and (rver == optimized_tag or (isinstance(cmd, str) and optimized_tag in cmd)))):
+                    elif (optimized_tag and (rver == optimized_tag or (isinstance(cmd, str) and optimized_tag in cmd))):
                         opt.append(r)
 
             self.baseline_results = base
