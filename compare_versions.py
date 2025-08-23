@@ -300,8 +300,25 @@ def main():
                         "optimized": optimized_label,
                     }
                     data["metadata"]["improvement_reference"] = baseline_label_raw
-                    with open(dashboard_path, "w") as jf:
-                        json.dump(data, jf, indent=2)
+                # Reclassify results into baseline/optimized versions using the chosen tags
+                try:
+                    base_tag = (labels.get("baseline") if labels else baseline_label_raw)
+                    opt_tag = (labels.get("optimized") if labels else (args.versions[1] if len(args.versions) > 1 else None))
+                    def strip_suffix(v: str) -> str:
+                        return v.split(" (")[0]
+                    base_tag = strip_suffix(base_tag) if isinstance(base_tag, str) else base_tag
+                    opt_tag = strip_suffix(opt_tag) if isinstance(opt_tag, str) else opt_tag
+                    if base_tag and opt_tag:
+                        for r in data.get("results", []):
+                            cmd = r.get("command_line", "")
+                            if isinstance(cmd, str) and base_tag in cmd:
+                                r["version"] = "baseline"
+                            elif isinstance(cmd, str) and opt_tag in cmd:
+                                r["version"] = "optimized"
+                except Exception:
+                    pass
+                with open(dashboard_path, "w") as jf:
+                    json.dump(data, jf, indent=2)
             except Exception as e:
                 print(f"Warning: could not inject display labels: {e}")
         except Exception as e:

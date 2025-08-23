@@ -5,6 +5,7 @@ Converts existing trajectory files to the JSON format expected by results_dashbo
 """
 
 import json
+import os
 import re
 import time
 from pathlib import Path
@@ -70,8 +71,12 @@ class BenchmarkResult:
 class TrajectoryConverter:
     """Convert trajectory files to benchmark results"""
 
-    def __init__(self, results_dir: Path = Path("results")):
-        self.results_dir = results_dir
+    def __init__(self, results_dir: Optional[Path] = None):
+        # Prefer RESULTS_DIR env for per-run isolation, fallback to ./results
+        if results_dir is not None:
+            self.results_dir = results_dir
+        else:
+            self.results_dir = Path(os.environ.get("RESULTS_DIR", "results"))
 
     def parse_trajectory_filename(self, filename: str) -> Dict:
         """Parse trajectory filename to extract metadata"""
@@ -195,20 +200,12 @@ class TrajectoryConverter:
             ate_rmse=0.08 + (0.02 if metadata['version'] == 'upstream' else 0.0)
         )
 
-        # Normalize version labels for dashboard grouping
-        raw_version = metadata['version']
-        if raw_version.startswith('upstream'):
-            norm_version = 'baseline'
-        elif raw_version in ('optimized', 'our local version'):
-            norm_version = 'optimized'
-        else:
-            # Treat all non-upstream as optimized for comparison purposes
-            norm_version = 'optimized'
-
         return BenchmarkResult(
             timestamp=metadata['timestamp'].isoformat(),
             sequence=metadata['sequence'].replace('_', '/'),
-            version=norm_version,
+            # Preserve raw version tag here; classification into baseline/optimized
+            # will be handled downstream (compare_versions injects labels and reclassifies).
+            version=metadata['version'],
             run_number=1,
             success=True,
             total_runtime_ms=runtime_ms,
