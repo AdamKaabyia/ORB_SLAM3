@@ -397,6 +397,18 @@ class ORBSlam3CLI:
             shutil.copy2(d, docs / d.name)
         for j in jsons:
             shutil.copy2(j, docs / j.name)
+        # Auto-generate HTML for any JSON that lacks an HTML counterpart in docs/
+        generated = 0
+        for j in sorted(docs.glob("compare_dashboard_*.json")):
+            expected_html = docs / ("dashboard_" + j.name.replace("compare_dashboard_", "").replace(".json", ".html"))
+            if not expected_html.exists():
+                try:
+                    cmd = f"python3 results_dashboard.py --results-file {j} --export-html {expected_html} --no-interactive"
+                    subprocess.run(cmd, shell=True, check=False)
+                    if expected_html.exists():
+                        generated += 1
+                except Exception:
+                    pass
         # Ensure Jekyll is disabled so Liquid doesn't parse content
         (docs / ".nojekyll").write_text("")
 
@@ -454,7 +466,7 @@ class ORBSlam3CLI:
 </table>
 """.replace("REPLACE_ROWS", "\n".join(rows))
         index.write_text(table)
-        print(f"Prepared {len(dashboards)} dashboards and {len(jsons)} JSONs in {docs} (open docs/index.html). Push/enable GitHub Pages to publish.")
+        print(f"Prepared {len(dashboards)} dashboards and {len(jsons)} JSONs in {docs} (generated {generated} HTML). Open docs/index.html. Push to publish.")
 
     def _detect_runtime_and_images(self):
         """Return (runtime, images_json) where images_json is a list of dicts for orb-slam3 images"""
