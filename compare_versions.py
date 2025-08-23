@@ -103,7 +103,7 @@ def run_container_version(container_tag: str, sequence_path: Path, stream: bool 
             # Stream output live and optionally tee to file
             log_fh = open(log_path, "w") if save_logs else None
             try:
-                process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+                process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1, env=os.environ.copy())
                 for line in process.stdout:  # type: ignore[attr-defined]
                     print(line, end="")
                     if log_fh:
@@ -117,7 +117,7 @@ def run_container_version(container_tag: str, sequence_path: Path, stream: bool 
             runtime_ms = (time.time() - start) * 1000.0
             return VersionTiming(container_tag, ret == 0, runtime_ms, ret, str(log_path) if save_logs else None)
         else:
-            proc = subprocess.run(cmd, capture_output=True, text=True)
+            proc = subprocess.run(cmd, capture_output=True, text=True, env=os.environ.copy())
             runtime_ms = (time.time() - start) * 1000.0
             if save_logs:
                 with open(log_path, "w") as f:
@@ -203,6 +203,7 @@ def main():
     parser.add_argument("--no-stream", action="store_true", help="Disable live log streaming (capture to file only)")
     parser.add_argument("--no-save-logs", action="store_true", help="Do not save per-run logs to benchmark_results/")
     parser.add_argument("--export-dashboard", metavar="OUT_JSON", help="Also export a dashboard-compatible JSON from trajectory files")
+    parser.add_argument("--auto-dashboard", action="store_true", help="After export, show dashboard summary (non-interactive)")
     args = parser.parse_args()
 
     dataset_config_path = Path(args.dataset_config)
@@ -305,6 +306,18 @@ def main():
                 print(f"Warning: could not inject display labels: {e}")
         except Exception as e:
             print(f"Warning: dashboard export failed: {e}")
+
+        # Optionally open dashboard summary automatically
+        if args.auto_dashboard:
+            try:
+                dash_cmd = [
+                    "python3", "results_dashboard.py",
+                    "--results-file", args.export_dashboard,
+                    "--no-interactive"
+                ]
+                subprocess.run(dash_cmd, check=False)
+            except Exception as e:
+                print(f"Warning: auto-dashboard failed: {e}")
 
     return 0
 

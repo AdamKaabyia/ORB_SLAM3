@@ -13,6 +13,9 @@ Usage: python3 orbslam3_cli.py [command] [options]
 """
 
 import os
+import time
+import shutil
+import glob
 import sys
 import subprocess
 import platform
@@ -316,6 +319,100 @@ class ORBSlam3CLI:
         print("\n[INFO] Rendering dashboard (non-interactive)...")
         dash_cmd = f"python3 results_dashboard.py --results-file {out_json} --no-interactive"
         subprocess.run(dash_cmd, shell=True)
+
+    def full_one_shot_pipeline(self):
+        """End-to-end: ensure datasets, build images as needed, compare, export HTML dashboard, print path."""
+        print("\n[ONE-SHOT FULL PIPELINE]")
+        # 0. Clean existing results/ and benchmark_results JSON/trajectories (optional)
+        if self.confirm("Clean existing trajectories/results before running? This removes results/*.txt and benchmark_results/*.json"):
+            results_dir = self.workspace / "results"
+            for pattern in ["f_*_trajectory.txt", "kf_*_trajectory.txt"]:
+                for f in glob.glob(str(results_dir / pattern)):
+                    try:
+                        os.remove(f)
+                    except Exception:
+                        pass
+            br_dir = self.workspace / "benchmark_results"
+            for f in br_dir.glob("*.json"):
+                try:
+                    f.unlink()
+                except Exception:
+                    pass
+        # 1. Ensure datasets present (machine_hall at least)
+        euroc_dir = self.workspace / "datasets/EuRoC/machine_hall/MH_01_easy"
+        if not euroc_dir.exists():
+            print("Datasets missing. Downloading machine_hall sequences...")
+            self.run_command("python3 euroc_dataset_scraper.py --location machine_hall", show_output=True)
+
+        # 2. Choose versions (with presets and repo@ref supported)
+        print("\nPick two versions to compare (presets: 1) v0.2-beta 2) v0.3-beta 3) v0.4-beta 4) v1.0 5) master)")
+        def read_version(label, default_value):
+            value = input(f"{label} (default {default_value}): ").strip()
+            if not value:
+                return default_value
+            if value.isdigit() and 1 <= int(value) <= len(self.common_upstream_refs):
+                return f"upstream-{self.common_upstream_refs[int(value)-1]}"
+            ok, resolved = self._parse_version_input(value)
+            if not ok or not resolved:
+                print("Could not resolve input; using default.")
+                return default_value
+            return resolved
+        v1 = read_version("Version A", "upstream-v1.0")
+        v2 = read_version("Version B", "optimized")
+        if v1 == v2:
+            print("Selected the same version twice; changing Version B to 'optimized'.")
+            v2 = "optimized"
+
+        # 3. Confirm build if images are missing
+        for tag in [v1, v2]:
+            if not self._ensure_or_confirm_build(tag):
+                print(f"[ERROR] Image '{tag}' unavailable. Aborting.")
+                return
+
+        # 4. Run compare with auto-dashboard and export HTML
+        out_json = f"compare_dashboard_{v1.replace(':','_')}_vs_{v2.replace(':','_')}.json"
+        env = os.environ.copy()
+        env["PYTHONUNBUFFERED"] = "1"
+        env["RICH_FORCE_TERMINAL"] = "1"
+        # Use dedicated results dir for clean aggregation
+        results_dir = self.workspace / f"results_run_{int(time.time())}"
+        results_dir.mkdir(exist_ok=True)
+        env["RESULTS_DIR"] = str(results_dir)
+        cmd = (
+            f"python3 compare_versions.py --runs 1 --sequences MH_01_easy --versions {v1} {v2} "
+            f"--export-dashboard {out_json} --auto-dashboard"
+        )
+        print("\n[INFO] Running compare...")
+        print("Command:", cmd)
+        if subprocess.run(cmd, shell=True, env=env).returncode != 0:
+            print("[ERROR] Compare failed.")
+            return
+
+        # 5. Export HTML
+        out_html = self.workspace / f"dashboard_{v1.replace(':','_')}_vs_{v2.replace(':','_')}.html"
+        dash_cmd = f"python3 results_dashboard.py --results-file {out_json} --export-html {out_html} --no-interactive"
+        if subprocess.run(dash_cmd, shell=True).returncode == 0:
+            print(f"\n[SUCCESS] HTML dashboard: {out_html}")
+        else:
+            print("[ERROR] HTML export failed.")
+
+    def prepare_github_pages(self):
+        """Collect latest HTML dashboards and JSON into docs/ for GitHub Pages."""
+        print("\n[EXPORT GITHUB PAGES]")
+        docs = self.workspace / "docs"
+        docs.mkdir(exist_ok=True)
+        # Copy dashboards and a simple index.html
+        dashboards = list(self.workspace.glob("dashboard_*.html"))
+        if not dashboards:
+            print("No dashboards found. Create one via one-shot or results export first.")
+            return
+        for d in dashboards:
+            shutil.copy2(d, docs / d.name)
+        # Create index
+        index = docs / "index.html"
+        links = "\n".join([f"<li><a href='{d.name}'>{d.name}</a></li>" for d in sorted(docs.glob("dashboard_*.html"))])
+        index.write_text(f"<!doctype html><meta charset='utf-8'><title>ORB-SLAM3 Reports</title><h1>Dashboards</h1><ul>{links}</ul>")
+        print(f"Prepared {len(dashboards)} dashboards in {docs} (open docs/index.html). Push to GitHub Pages branch to publish.")
 
     def _detect_runtime_and_images(self):
         """Return (runtime, images_json) where images_json is a list of dicts for orb-slam3 images"""
@@ -889,6 +986,8 @@ class ORBSlam3CLI:
                 ("8", "compare-upstream", "Build two upstream refs and compare"),
                 ("9", "build-common", "Build common upstream versions (v0.2/0.3/0.4/v1.0/master)"),
                 ("10", "one-shot", "One-shot: ensure images, compare, export & show dashboard"),
+                ("11", "one-shot-full", "One-shot FULL: get data, build, compare, export HTML"),
+                ("12", "export-pages", "Prepare docs/ with dashboards for GitHub Pages"),
                 ("0", "quit", "Exit application")
             ]
 
@@ -926,6 +1025,10 @@ class ORBSlam3CLI:
                 self.build_common_versions()
             elif command == "one-shot":
                 self.one_shot_compare()
+            elif command == "one-shot-full":
+                self.full_one_shot_pipeline()
+            elif command == "export-pages":
+                self.prepare_github_pages()
 
             if command != "status":
                 input("\nPress Enter to continue...")

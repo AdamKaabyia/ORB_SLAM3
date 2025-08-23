@@ -189,8 +189,8 @@ def run_orbslam_with_progress(container_name, vocab_path, config_path, sequence_
         console = Console()
         console.print(f"[cyan]Estimated total frames:[/cyan] {total_frames:,}")
 
-    # Create results directory with proper permissions
-    results_dir = Path("results")
+    # Create results directory with proper permissions (allow override via env)
+    results_dir = Path(os.environ.get("RESULTS_DIR", "results"))
     results_dir.mkdir(exist_ok=True)
     results_dir.chmod(0o777)  # Ensure container can write to it
 
@@ -217,7 +217,7 @@ def run_orbslam_with_progress(container_name, vocab_path, config_path, sequence_
         "podman", "run", "--rm",
         "--user", f"{os.getuid()}:{os.getgid()}",  # Run as current user to fix permissions
         "-v", f"{os.getcwd()}:/workspace:Z",
-        "-w", "/workspace/results",  # Work directly in results directory
+        "-w", f"/workspace/{results_dir.as_posix()}",  # Work directly in chosen results directory
         f"localhost/orb-slam3:{container_name}",
         "/opt/orb-slam3/Examples/Monocular/mono_euroc",
         vocab_path_in_container, config_path_in_container, sequence_path_in_container, timestamps_path,
