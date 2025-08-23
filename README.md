@@ -178,6 +178,10 @@ python3 results_dashboard.py --results-file benchmark_results.json --export-repo
 
 # Non-interactive summary
 python3 results_dashboard.py --results-file benchmark_results.json --no-interactive
+
+# Export full, untruncated HTML dashboard
+python3 results_dashboard.py --results-file benchmark_results.json \
+  --export-html dashboard.html --no-interactive
 ```
 
 ## Version Comparison (Containers)

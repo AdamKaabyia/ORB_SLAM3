@@ -180,12 +180,12 @@ class ResultsDashboard:
             pass
 
         if RICH_AVAILABLE:
-            table = Table(title="Performance Comparison Summary", box=box.ROUNDED)
-            table.add_column("Metric", style="cyan", width=20)
-            table.add_column(baseline_label, style="white", justify="right")
-            table.add_column(optimized_label, style="green", justify="right")
-            table.add_column("Improvement", style="yellow", justify="right")
-            table.add_column("Significance", style="blue", justify="center")
+            table = Table(title="Performance Comparison Summary", box=box.ROUNDED, expand=True)
+            table.add_column("Metric", style="cyan", width=22, no_wrap=True)
+            table.add_column(baseline_label, style="white", justify="right", no_wrap=True, overflow="fold")
+            table.add_column(optimized_label, style="green", justify="right", no_wrap=True, overflow="fold")
+            table.add_column("Improvement", style="yellow", justify="right", no_wrap=True)
+            table.add_column("Significance", style="blue", justify="center", no_wrap=True)
 
             for name, path, unit, lower_is_better in metrics:
                 try:
@@ -240,6 +240,123 @@ class ResultsDashboard:
                 except:
                     print(f"{name:<15} {'N/A':<12} {'N/A':<12} {'N/A':<12}")
 
+    def export_html(self, output_file: Path):
+        """Export dashboard views to a simple self-contained HTML file"""
+        if not self.results_data:
+            print("No results loaded")
+            return
+
+        # Dynamic labels
+        baseline_label = "Baseline"
+        optimized_label = "Optimized"
+        try:
+            labels = self.results_data.get("metadata", {}).get("labels", {})
+            baseline_label = labels.get("baseline", baseline_label)
+            optimized_label = labels.get("optimized", optimized_label)
+        except Exception:
+            pass
+
+        # Summary metrics (same as console)
+        metrics = [
+            ("Runtime", "total_runtime_ms", "ms", True),
+            ("Memory Peak", "system_metrics.memory_mb_peak", "MB", True),
+            ("CPU Average", "system_metrics.cpu_percent_avg", "%", True),
+            ("Frames Processed", "slam_metrics.processed_frames", "", False),
+            ("Frames Lost", "slam_metrics.lost_frames", "", True),
+            ("Keyframes Created", "slam_metrics.keyframes_created", "", False),
+            ("RMSE Translation", "accuracy_metrics.rmse_translation", "", True),
+            ("RMSE Rotation", "accuracy_metrics.rmse_rotation", "°", True),
+        ]
+
+        def html_escape(s: str) -> str:
+            return (s.replace("&", "&amp;")
+                    .replace("<", "&lt;")
+                    .replace(">", "&gt;")
+                    .replace('"', "&quot;"))
+
+        # Header
+        meta = self.results_data.get("metadata", {})
+        title = "ORB-SLAM3 Performance Dashboard"
+        subtitle = f"Results from {html_escape(meta.get('timestamp',''))}"
+        success = f"{meta.get('successful_runs',0)}/{meta.get('total_runs',0)} successful runs"
+
+        # Build summary table rows
+        summary_rows = []
+        for name, path, unit, lower_is_better in metrics:
+            try:
+                stats = self.calculate_comparison_stats(path)
+                base = f"{stats.baseline_mean:.1f}{(' ' + unit) if unit else ''}"
+                opt = f"{stats.optimized_mean:.1f}{(' ' + unit) if unit else ''}"
+                improvement = stats.improvement_percent
+                if not lower_is_better:
+                    improvement = -improvement
+                imp_str = f"{improvement:+.1f}%"
+                summary_rows.append((name, base, opt, imp_str))
+            except Exception:
+                summary_rows.append((name, "N/A", "N/A", "N/A"))
+
+        # Per-sequence averages
+        sequences = {}
+        for result in self.baseline_results + self.optimized_results:
+            seq_name = result["sequence"]
+            if seq_name not in sequences:
+                sequences[seq_name] = {"baseline": [], "optimized": []}
+            sequences[seq_name][result["version"]].append(result)
+
+        seq_rows = []
+        for seq_name, seq_results in sorted(sequences.items()):
+            baseline_runtimes = [r["total_runtime_ms"] for r in seq_results["baseline"]]
+            optimized_runtimes = [r["total_runtime_ms"] for r in seq_results["optimized"]]
+            if baseline_runtimes and optimized_runtimes:
+                baseline_avg = statistics.mean(baseline_runtimes)
+                optimized_avg = statistics.mean(optimized_runtimes)
+                improvement = ((baseline_avg - optimized_avg) / baseline_avg) * 100 if baseline_avg else 0.0
+                seq_rows.append(
+                    (seq_name, f"{baseline_avg:.1f}", f"{optimized_avg:.1f}", f"{improvement:+.1f}%", f"{len(baseline_runtimes)}/{len(optimized_runtimes)}")
+                )
+
+        html = [
+            "<!doctype html>",
+            "<meta charset='utf-8'>",
+            f"<title>{html_escape(title)}</title>",
+            "<style>body{font-family:system-ui,Arial,sans-serif;margin:24px} table{border-collapse:collapse;width:100%;margin:16px 0} th,td{border:1px solid #ddd;padding:8px} th{background:#f5f5f5;text-align:left} caption{font-weight:bold;margin-bottom:8px} .meta{color:#555;margin-bottom:16px}</style>",
+            f"<h1>{html_escape(title)}</h1>",
+            f"<div class='meta'>{html_escape(subtitle)}<br>\n{html_escape(success)}<br>\nBaseline: {html_escape(baseline_label)} &nbsp;|&nbsp; Improved: {html_escape(optimized_label)}</div>",
+            "<table>",
+            f"<caption>Performance Comparison Summary</caption>",
+            "<thead><tr>",
+            "<th>Metric</th>",
+            f"<th>{html_escape(baseline_label)}</th>",
+            f"<th>{html_escape(optimized_label)}</th>",
+            "<th>Improvement</th>",
+            "</tr></thead>",
+            "<tbody>",
+        ]
+        for name, base, opt, imp in summary_rows:
+            html.append(f"<tr><td>{html_escape(name)}</td><td style='text-align:right'>{html_escape(base)}</td><td style='text-align:right'>{html_escape(opt)}</td><td style='text-align:right'>{html_escape(imp)}</td></tr>")
+        html += ["</tbody></table>"]
+
+        # Per-sequence table
+        html += [
+            "<table>",
+            f"<caption>Per-Sequence Performance</caption>",
+            "<thead><tr>",
+            "<th>Sequence</th>",
+            f"<th>{html_escape(baseline_label)} Avg (ms)</th>",
+            f"<th>{html_escape(optimized_label)} Avg (ms)</th>",
+            "<th>Improvement</th>",
+            "<th>Runs</th>",
+            "</tr></thead>",
+            "<tbody>",
+        ]
+        for seq_name, b, o, imp, runs in seq_rows:
+            html.append(f"<tr><td>{html_escape(seq_name)}</td><td style='text-align:right'>{b}</td><td style='text-align:right'>{o}</td><td style='text-align:right'>{imp}</td><td style='text-align:center'>{runs}</td></tr>")
+        html += ["</tbody></table>"]
+
+        output_file = Path(output_file)
+        output_file.write_text("\n".join(html))
+        print(f"HTML dashboard exported to: {output_file}")
+
     def display_sequence_breakdown(self):
         """Display per-sequence performance breakdown"""
         if not self.results_data:
@@ -265,12 +382,12 @@ class ResultsDashboard:
             sequences[seq_name][result["version"]].append(result)
 
         if RICH_AVAILABLE:
-            table = Table(title="Per-Sequence Performance", box=box.ROUNDED)
-            table.add_column("Sequence", style="cyan")
-            table.add_column(f"{baseline_label} Avg (ms)", style="white", justify="right")
-            table.add_column(f"{optimized_label} Avg (ms)", style="green", justify="right")
-            table.add_column("Improvement", style="yellow", justify="right")
-            table.add_column("Runs", style="blue", justify="center")
+            table = Table(title="Per-Sequence Performance", box=box.ROUNDED, expand=True)
+            table.add_column("Sequence", style="cyan", no_wrap=True, overflow="fold")
+            table.add_column(f"{baseline_label} Avg (ms)", style="white", justify="right", no_wrap=True, overflow="fold")
+            table.add_column(f"{optimized_label} Avg (ms)", style="green", justify="right", no_wrap=True, overflow="fold")
+            table.add_column("Improvement", style="yellow", justify="right", no_wrap=True)
+            table.add_column("Runs", style="blue", justify="center", no_wrap=True)
 
             for seq_name, seq_results in sorted(sequences.items()):
                 baseline_runtimes = [r["total_runtime_ms"] for r in seq_results["baseline"]]
@@ -578,6 +695,7 @@ def main():
     parser.add_argument("--results-file", type=Path, help="Results JSON file to load")
     parser.add_argument("--export-plots", action="store_true", help="Generate and export plots")
     parser.add_argument("--export-report", action="store_true", help="Export markdown report")
+    parser.add_argument("--export-html", type=Path, help="Export dashboard as HTML to this file")
     parser.add_argument("--no-interactive", action="store_true", help="Non-interactive mode")
 
     args = parser.parse_args()
@@ -596,6 +714,10 @@ def main():
     # Export report if requested
     if args.export_report:
         dashboard.export_report()
+
+    # Export HTML if requested
+    if args.export_html:
+        dashboard.export_html(args.export_html)
 
     # Interactive mode
     if not args.no_interactive:
