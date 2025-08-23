@@ -1,0 +1,25 @@
+{
+  "comparisons": [
+    {
+      "location": "machine_hall",
+      "sequence": "MH_01_easy",
+      "dataset_path": "datasets/EuRoC/machine_hall/MH_01_easy",
+      "timings": [
+        {
+          "version": "upstream-v0.3-beta",
+          "success": true,
+          "runtime_ms": 221819.59342956543,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v0.3-beta_MH_01_easy_20250823_223949.log"
+        },
+        {
+          "version": "upstream-v0.4-beta",
+          "success": true,
+          "runtime_ms": 225725.25596618652,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v0.4-beta_MH_01_easy_20250823_224330.log"
+        }
+      ]
+    }
+  ]
+}

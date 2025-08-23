@@ -272,13 +272,15 @@ def main():
     # Optionally export a dashboard-compatible JSON using trajectory conversion
     if args.export_dashboard:
         try:
-            # Use the converter to scan results/ and produce OUT_JSON
+            # Use the converter to scan the correct RESULTS_DIR and produce OUT_JSON
+            results_dir_env = os.environ.get("RESULTS_DIR", "results")
             cmd = [
                 "python3", "trajectory_to_benchmark.py",
+                "--results-dir", results_dir_env,
                 "--output", args.export_dashboard
             ]
-            print(f"Exporting dashboard JSON via trajectory conversion -> {args.export_dashboard}")
-            subprocess.run(cmd, check=False)
+            print(f"Exporting dashboard JSON via trajectory conversion -> {args.export_dashboard} (from {results_dir_env})")
+            subprocess.run(cmd, check=False, env=os.environ.copy())
 
             # Inject display labels so the dashboard can show real version names
             try:
@@ -310,10 +312,11 @@ def main():
                     opt_tag = strip_suffix(opt_tag) if isinstance(opt_tag, str) else opt_tag
                     if base_tag and opt_tag:
                         for r in data.get("results", []):
-                            cmd = r.get("command_line", "")
-                            if isinstance(cmd, str) and base_tag in cmd:
+                            cmdline = r.get("command_line", "")
+                            rver = r.get("version")
+                            if (isinstance(cmdline, str) and base_tag in cmdline) or rver == base_tag:
                                 r["version"] = "baseline"
-                            elif isinstance(cmd, str) and opt_tag in cmd:
+                            elif (isinstance(cmdline, str) and opt_tag in cmdline) or rver == opt_tag:
                                 r["version"] = "optimized"
                 except Exception:
                     pass
