@@ -401,18 +401,72 @@ class ORBSlam3CLI:
         print("\n[EXPORT GITHUB PAGES]")
         docs = self.workspace / "docs"
         docs.mkdir(exist_ok=True)
-        # Copy dashboards and a simple index.html
+        # Copy dashboards and their JSONs
         dashboards = list(self.workspace.glob("dashboard_*.html"))
-        if not dashboards:
-            print("No dashboards found. Create one via one-shot or results export first.")
+        jsons = list(self.workspace.glob("compare_dashboard_*.json"))
+        if not dashboards and not jsons:
+            print("No dashboards or JSON results found. Create them via one-shot/full pipeline first.")
             return
         for d in dashboards:
             shutil.copy2(d, docs / d.name)
-        # Create index
+        for j in jsons:
+            shutil.copy2(j, docs / j.name)
+
+        # Build items by reading JSON metadata
+        items = []
+        for j in sorted(docs.glob("compare_dashboard_*.json")):
+            try:
+                with open(j, "r") as fh:
+                    data = json.load(fh)
+                meta = data.get("metadata", {})
+                labels = meta.get("labels", {})
+                ts = meta.get("timestamp", "")
+                base = labels.get("baseline", "Baseline")
+                opt = labels.get("optimized", "Optimized")
+                total = meta.get("total_runs", 0)
+                succ = meta.get("successful_runs", 0)
+                html_name = "dashboard_" + j.name.replace("compare_dashboard_", "").replace(".json", ".html")
+                html_exists = (docs / html_name).exists()
+                items.append({
+                    "json": j.name,
+                    "html": html_name if html_exists else "",
+                    "timestamp": ts,
+                    "baseline": base,
+                    "optimized": opt,
+                    "runs": f"{succ}/{total}"
+                })
+            except Exception:
+                continue
+
+        # Create richer index
         index = docs / "index.html"
-        links = "\n".join([f"<li><a href='{d.name}'>{d.name}</a></li>" for d in sorted(docs.glob("dashboard_*.html"))])
-        index.write_text(f"<!doctype html><meta charset='utf-8'><title>ORB-SLAM3 Reports</title><h1>Dashboards</h1><ul>{links}</ul>")
-        print(f"Prepared {len(dashboards)} dashboards in {docs} (open docs/index.html). Push to GitHub Pages branch to publish.")
+        rows = []
+        for it in items:
+            link_html = f"<a href='{it['html']}'>Open</a>" if it["html"] else "(missing html)"
+            link_json = f"<a href='{it['json']}'>JSON</a>"
+            rows.append(f"<tr><td>{it['timestamp']}</td><td>{it['baseline']}</td><td>{it['optimized']}</td><td>{it['runs']}</td><td>{link_html} | {link_json}</td></tr>")
+        table = """
+<!doctype html>
+<meta charset='utf-8'>
+<title>ORB-SLAM3 Reports</title>
+<style>
+ body{font-family:system-ui,Arial,sans-serif;margin:24px}
+ table{border-collapse:collapse;width:100%}
+ th,td{border:1px solid #ddd;padding:8px}
+ th{background:#f5f5f5;text-align:left}
+ .hint{color:#666;margin:8px 0}
+</style>
+<h1>ORB-SLAM3 Comparison Runs</h1>
+<div class='hint'>This index is auto-generated. Click a row's HTML link to view the full dashboard.</div>
+<table>
+  <thead><tr><th>Timestamp</th><th>Baseline</th><th>Improved</th><th>Runs</th><th>Links</th></tr></thead>
+  <tbody>
+    REPLACE_ROWS
+  </tbody>
+</table>
+""".replace("REPLACE_ROWS", "\n".join(rows))
+        index.write_text(table)
+        print(f"Prepared {len(dashboards)} dashboards and {len(jsons)} JSONs in {docs} (open docs/index.html). Push/enable GitHub Pages to publish.")
 
     def _detect_runtime_and_images(self):
         """Return (runtime, images_json) where images_json is a list of dicts for orb-slam3 images"""
