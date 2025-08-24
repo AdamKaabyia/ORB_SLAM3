@@ -248,10 +248,10 @@ class ORBSlam3CLI:
         env = os.environ.copy()
         env["PYTHONUNBUFFERED"] = "1"
         env["RICH_FORCE_TERMINAL"] = "1"
-        # Use an isolated results directory per run to avoid mixing with old trajectories
-        results_dir = self.workspace / f"results_run_{int(time.time())}"
-        results_dir.mkdir(exist_ok=True)
-        env["RESULTS_DIR"] = str(results_dir)
+        # Use an isolated (relative) results directory per run to avoid mixing with old trajectories
+        results_dir_name = f"results_run_{int(time.time())}"
+        (self.workspace / results_dir_name).mkdir(exist_ok=True)
+        env["RESULTS_DIR"] = results_dir_name
         print("\n[INFO] Starting comparison...")
         print("Command:", " ".join(cmd_parts))
         subprocess.run(" ".join(cmd_parts), shell=True, env=env)
@@ -371,10 +371,10 @@ class ORBSlam3CLI:
         env = os.environ.copy()
         env["PYTHONUNBUFFERED"] = "1"
         env["RICH_FORCE_TERMINAL"] = "1"
-        # Use dedicated per-run results directory for clean aggregation
-        results_dir = self.workspace / f"results_run_{int(time.time())}"
-        results_dir.mkdir(exist_ok=True)
-        env["RESULTS_DIR"] = str(results_dir)
+        # Use dedicated (relative) per-run results directory for clean aggregation
+        results_dir_name = f"results_run_{int(time.time())}"
+        (self.workspace / results_dir_name).mkdir(exist_ok=True)
+        env["RESULTS_DIR"] = results_dir_name
         cmd = (
             f"python3 compare_versions.py --runs 1 --sequences MH_01_easy --versions {v1} {v2} "
             f"--export-dashboard {out_json} --auto-dashboard"
