@@ -317,8 +317,15 @@ class ORBSlam3CLI:
 
         # Show dashboard
         print("\n[INFO] Rendering dashboard (non-interactive)...")
-        dash_cmd = f"python3 results_dashboard.py --results-file {out_json} --no-interactive"
+        out_html = self.workspace / f"dashboard_{v1.replace(':','_')}_vs_{v2.replace(':','_')}.html"
+        dash_cmd = f"python3 results_dashboard.py --results-file {out_json} --export-html {out_html} --no-interactive"
         subprocess.run(dash_cmd, shell=True)
+        print(f"[INFO] HTML dashboard saved to: {out_html}")
+        # Prepare/update docs/ for GitHub Pages
+        try:
+            self.prepare_github_pages()
+        except Exception:
+            pass
 
     def full_one_shot_pipeline(self):
         """End-to-end: ensure datasets, build images as needed, compare, export HTML dashboard, print path."""
@@ -360,10 +367,8 @@ class ORBSlam3CLI:
         env = os.environ.copy()
         env["PYTHONUNBUFFERED"] = "1"
         env["RICH_FORCE_TERMINAL"] = "1"
-        # Use dedicated results dir for clean aggregation
-        results_dir = self.workspace / f"results_run_{int(time.time())}"
-        results_dir.mkdir(exist_ok=True)
-        env["RESULTS_DIR"] = str(results_dir)
+        # Ensure converter scans the directory where trajectories are written
+        env["RESULTS_DIR"] = str(self.workspace / "results")
         cmd = (
             f"python3 compare_versions.py --runs 1 --sequences MH_01_easy --versions {v1} {v2} "
             f"--export-dashboard {out_json} --auto-dashboard"
@@ -381,6 +386,11 @@ class ORBSlam3CLI:
             print(f"\n[SUCCESS] HTML dashboard: {out_html}")
         else:
             print("[ERROR] HTML export failed.")
+        # 6. Also prepare docs/ for GitHub Pages consumption
+        try:
+            self.prepare_github_pages()
+        except Exception:
+            pass
 
     def prepare_github_pages(self):
         """Collect latest HTML dashboards and JSON into docs/ for GitHub Pages."""
