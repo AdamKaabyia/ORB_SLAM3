@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "timestamp": "2025-08-24T15:36:48.565531",
+    "timestamp": "2025-08-24T17:12:10.879215",
     "total_runs": 2,
     "successful_runs": 2,
     "sequences_tested": 1,
@@ -18,9 +18,52 @@
   },
   "results": [
     {
-      "timestamp": "2025-08-24T15:29:30",
+      "timestamp": "2025-08-24T17:04:56",
       "sequence": "MH/01/easy",
       "version": "baseline",
+      "run_number": 1,
+      "success": true,
+      "total_runtime_ms": 439319.9998855591,
+      "system_metrics": {
+        "cpu_percent_avg": 87.358,
+        "cpu_percent_max": 95.0,
+        "memory_mb_avg": 800.0,
+        "memory_mb_max": 950.0,
+        "memory_mb_peak": 1217.9,
+        "disk_io_read_mb": 100.0,
+        "disk_io_write_mb": 50.0,
+        "thermal_max_temp": 65.0
+      },
+      "slam_metrics": {
+        "total_frames": 3679,
+        "processed_frames": 3679,
+        "lost_frames": 73,
+        "keyframes_created": 367,
+        "map_points_created": 0,
+        "loop_closures": 0,
+        "relocalization_count": 0,
+        "avg_tracking_time_ms": 119.4128839047456,
+        "avg_mapping_time_ms": 0.0,
+        "avg_loop_time_ms": 0.0,
+        "final_map_size_mb": 0.0
+      },
+      "accuracy_metrics": {
+        "rmse_translation": 0.05,
+        "rmse_rotation": 0.8,
+        "max_translation_error": 0.0,
+        "max_rotation_error": 0.0,
+        "ate_rmse": 0.08,
+        "rpe_rmse": 0.0
+      },
+      "command_line": "ORB-SLAM3 MH_01_easy upstream-v1.0",
+      "exit_code": 0,
+      "stdout_log": "",
+      "stderr_log": ""
+    },
+    {
+      "timestamp": "2025-08-24T17:08:35",
+      "sequence": "MH/01/easy",
+      "version": "optimized",
       "run_number": 1,
       "success": true,
       "total_runtime_ms": 441359.99965667725,
@@ -43,49 +86,6 @@
         "loop_closures": 0,
         "relocalization_count": 0,
         "avg_tracking_time_ms": 119.96738234756108,
-        "avg_mapping_time_ms": 0.0,
-        "avg_loop_time_ms": 0.0,
-        "final_map_size_mb": 0.0
-      },
-      "accuracy_metrics": {
-        "rmse_translation": 0.05,
-        "rmse_rotation": 0.8,
-        "max_translation_error": 0.0,
-        "max_rotation_error": 0.0,
-        "ate_rmse": 0.08,
-        "rpe_rmse": 0.0
-      },
-      "command_line": "ORB-SLAM3 MH_01_easy upstream-v1.0",
-      "exit_code": 0,
-      "stdout_log": "",
-      "stderr_log": ""
-    },
-    {
-      "timestamp": "2025-08-24T15:33:08",
-      "sequence": "MH/01/easy",
-      "version": "optimized",
-      "run_number": 1,
-      "success": true,
-      "total_runtime_ms": 441240.00034332275,
-      "system_metrics": {
-        "cpu_percent_avg": 87.358,
-        "cpu_percent_max": 95.0,
-        "memory_mb_avg": 800.0,
-        "memory_mb_max": 950.0,
-        "memory_mb_peak": 1217.9,
-        "disk_io_read_mb": 100.0,
-        "disk_io_write_mb": 50.0,
-        "thermal_max_temp": 65.0
-      },
-      "slam_metrics": {
-        "total_frames": 3679,
-        "processed_frames": 3679,
-        "lost_frames": 73,
-        "keyframes_created": 367,
-        "map_points_created": 0,
-        "loop_closures": 0,
-        "relocalization_count": 0,
-        "avg_tracking_time_ms": 119.93476497508094,
         "avg_mapping_time_ms": 0.0,
         "avg_loop_time_ms": 0.0,
         "final_map_size_mb": 0.0

@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "timestamp": "2025-08-24T17:26:29.721414",
+    "timestamp": "2025-08-24T17:33:37.480930",
     "total_runs": 2,
     "successful_runs": 2,
     "sequences_tested": 1,
@@ -12,18 +12,18 @@
     },
     "labels": {
       "baseline": "upstream-v1.0 (baseline)",
-      "optimized": "upstream-v0.3-beta (improved)"
+      "optimized": "upstream-master (improved)"
     },
     "improvement_reference": "upstream-v1.0"
   },
   "results": [
     {
-      "timestamp": "2025-08-24T17:19:19",
+      "timestamp": "2025-08-24T17:26:30",
       "sequence": "MH/01/easy",
       "version": "baseline",
       "run_number": 1,
       "success": true,
-      "total_runtime_ms": 441359.99965667725,
+      "total_runtime_ms": 439319.9998855591,
       "system_metrics": {
         "cpu_percent_avg": 87.358,
         "cpu_percent_max": 95.0,
@@ -42,7 +42,7 @@
         "map_points_created": 0,
         "loop_closures": 0,
         "relocalization_count": 0,
-        "avg_tracking_time_ms": 119.96738234756108,
+        "avg_tracking_time_ms": 119.4128839047456,
         "avg_mapping_time_ms": 0.0,
         "avg_loop_time_ms": 0.0,
         "final_map_size_mb": 0.0
@@ -61,7 +61,7 @@
       "stderr_log": ""
     },
     {
-      "timestamp": "2025-08-24T17:22:54",
+      "timestamp": "2025-08-24T17:30:04",
       "sequence": "MH/01/easy",
       "version": "optimized",
       "run_number": 1,
@@ -98,7 +98,7 @@
         "ate_rmse": 0.08,
         "rpe_rmse": 0.0
       },
-      "command_line": "ORB-SLAM3 MH_01_easy upstream-v0.3-beta",
+      "command_line": "ORB-SLAM3 MH_01_easy upstream-master",
       "exit_code": 0,
       "stdout_log": "",
       "stderr_log": ""
