@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "timestamp": "2025-08-23T21:34:07.884965",
+    "timestamp": "2025-08-24T19:18:42.671166",
     "total_runs": 2,
     "successful_runs": 2,
     "sequences_tested": 1,
@@ -18,12 +18,12 @@
   },
   "results": [
     {
-      "timestamp": "2025-08-23T21:26:42",
+      "timestamp": "2025-08-24T19:11:41",
       "sequence": "MH/01/easy",
       "version": "baseline",
       "run_number": 1,
       "success": true,
-      "total_runtime_ms": 439319.9998855591,
+      "total_runtime_ms": 441359.99965667725,
       "system_metrics": {
         "cpu_percent_avg": 87.358,
         "cpu_percent_max": 95.0,
@@ -42,7 +42,7 @@
         "map_points_created": 0,
         "loop_closures": 0,
         "relocalization_count": 0,
-        "avg_tracking_time_ms": 119.4128839047456,
+        "avg_tracking_time_ms": 119.96738234756108,
         "avg_mapping_time_ms": 0.0,
         "avg_loop_time_ms": 0.0,
         "final_map_size_mb": 0.0
@@ -61,12 +61,12 @@
       "stderr_log": ""
     },
     {
-      "timestamp": "2025-08-23T21:30:25",
+      "timestamp": "2025-08-24T19:15:11",
       "sequence": "MH/01/easy",
-      "version": "baseline",
+      "version": "optimized",
       "run_number": 1,
       "success": true,
-      "total_runtime_ms": 439319.9998855591,
+      "total_runtime_ms": 441359.99965667725,
       "system_metrics": {
         "cpu_percent_avg": 87.358,
         "cpu_percent_max": 95.0,
@@ -85,7 +85,7 @@
         "map_points_created": 0,
         "loop_closures": 0,
         "relocalization_count": 0,
-        "avg_tracking_time_ms": 119.4128839047456,
+        "avg_tracking_time_ms": 119.96738234756108,
         "avg_mapping_time_ms": 0.0,
         "avg_loop_time_ms": 0.0,
         "final_map_size_mb": 0.0
