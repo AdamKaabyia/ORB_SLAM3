@@ -5223,7 +5223,7 @@
     {
       "timestamp": "2025-08-23T09:54:58",
       "sequence": "MH/01/easy",
-      "version": "baseline",
+      "version": "optimized",
       "run_number": 1,
       "success": true,
       "total_runtime_ms": 439319.9998855591,
@@ -5309,7 +5309,7 @@
     {
       "timestamp": "2025-08-23T10:06:03",
       "sequence": "MH/01/easy",
-      "version": "baseline",
+      "version": "optimized",
       "run_number": 1,
       "success": true,
       "total_runtime_ms": 441359.99965667725,
