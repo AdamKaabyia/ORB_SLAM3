@@ -1,0 +1,47 @@
+<!doctype html>
+<meta charset='utf-8'>
+<title>ORB-SLAM3 Performance Dashboard</title>
+<style>body{font-family:system-ui,Arial,sans-serif;margin:24px} table{border-collapse:collapse;width:100%;margin:16px 0} th,td{border:1px solid #ddd;padding:8px} th{background:#f5f5f5;text-align:left} caption{font-weight:bold;margin-bottom:8px} .meta{color:#555;margin-bottom:16px}</style>
+<h1>ORB-SLAM3 Performance Dashboard</h1>
+<div class='meta'>Results from 2025-08-25T08:51:12.290167<br>
+20/20 successful runs<br>
+Baseline: upstream-v1.0 (baseline) &nbsp;|&nbsp; Improved: optimized (improved)</div>
+<table>
+<caption>Performance Comparison Summary</caption>
+<thead><tr>
+<th>Metric</th>
+<th>upstream-v1.0 (baseline)</th>
+<th>optimized (improved)</th>
+<th>Improvement</th>
+</tr></thead>
+<tbody>
+<tr><td>Runtime</td><td style='text-align:right'>252676.0 ms</td><td style='text-align:right'>255316.0 ms</td><td style='text-align:right'>-1.0%</td></tr>
+<tr><td>Memory Peak</td><td style='text-align:right'>1090.5 MB</td><td style='text-align:right'>1092.9 MB</td><td style='text-align:right'>-0.2%</td></tr>
+<tr><td>CPU Average</td><td style='text-align:right'>84.8 %</td><td style='text-align:right'>84.9 %</td><td style='text-align:right'>-0.1%</td></tr>
+<tr><td>Frames Processed</td><td style='text-align:right'>2405.2</td><td style='text-align:right'>2429.3</td><td style='text-align:right'>+1.0%</td></tr>
+<tr><td>Frames Lost</td><td style='text-align:right'>47.5</td><td style='text-align:right'>48.0</td><td style='text-align:right'>-1.1%</td></tr>
+<tr><td>Keyframes Created</td><td style='text-align:right'>240.1</td><td style='text-align:right'>242.4</td><td style='text-align:right'>+1.0%</td></tr>
+<tr><td>RMSE Translation</td><td style='text-align:right'>0.1</td><td style='text-align:right'>0.1</td><td style='text-align:right'>+0.0%</td></tr>
+<tr><td>RMSE Rotation</td><td style='text-align:right'>0.8 °</td><td style='text-align:right'>0.8 °</td><td style='text-align:right'>+0.0%</td></tr>
+</tbody></table>
+<table>
+<caption>Per-Sequence Performance</caption>
+<thead><tr>
+<th>Sequence</th>
+<th>upstream-v1.0 (baseline) Avg (ms)</th>
+<th>optimized (improved) Avg (ms)</th>
+<th>Improvement</th>
+<th>Runs</th>
+</tr></thead>
+<tbody>
+<tr><td>MH/01/easy</td><td style='text-align:right'>441360.0</td><td style='text-align:right'>441360.0</td><td style='text-align:right'>+0.0%</td><td style='text-align:center'>1/1</td></tr>
+<tr><td>MH/02/easy</td><td style='text-align:right'>364200.0</td><td style='text-align:right'>364200.0</td><td style='text-align:right'>+0.0%</td><td style='text-align:center'>1/1</td></tr>
+<tr><td>MH/03/medium</td><td style='text-align:right'>264400.0</td><td style='text-align:right'>264400.0</td><td style='text-align:right'>+0.0%</td><td style='text-align:center'>1/1</td></tr>
+<tr><td>MH/04/difficult</td><td style='text-align:right'>198000.0</td><td style='text-align:right'>198000.0</td><td style='text-align:right'>+0.0%</td><td style='text-align:center'>1/1</td></tr>
+<tr><td>MH/05/difficult</td><td style='text-align:right'>219100.0</td><td style='text-align:right'>219100.0</td><td style='text-align:right'>+0.0%</td><td style='text-align:center'>1/1</td></tr>
+<tr><td>V1/01/easy</td><td style='text-align:right'>280100.0</td><td style='text-align:right'>280100.0</td><td style='text-align:right'>+0.0%</td><td style='text-align:center'>1/1</td></tr>
+<tr><td>V1/02/medium</td><td style='text-align:right'>161300.0</td><td style='text-align:right'>161300.0</td><td style='text-align:right'>+0.0%</td><td style='text-align:center'>1/1</td></tr>
+<tr><td>V1/03/difficult</td><td style='text-align:right'>163100.0</td><td style='text-align:right'>196800.0</td><td style='text-align:right'>-20.7%</td><td style='text-align:center'>1/1</td></tr>
+<tr><td>V2/01/easy</td><td style='text-align:right'>207300.0</td><td style='text-align:right'>207300.0</td><td style='text-align:right'>+0.0%</td><td style='text-align:center'>1/1</td></tr>
+<tr><td>V2/02/medium</td><td style='text-align:right'>227900.0</td><td style='text-align:right'>220600.0</td><td style='text-align:right'>+3.2%</td><td style='text-align:center'>1/1</td></tr>
+</tbody></table>
