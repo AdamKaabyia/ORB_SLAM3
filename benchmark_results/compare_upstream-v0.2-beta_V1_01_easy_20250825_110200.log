@@ -1,0 +1,82 @@
+Auto-detected timestamp file: 
+/opt/orb-slam3/Examples/Monocular/EuRoC_TimeStamps/V101.txt
+Estimated total frames: 2,912
+╭────────────────────────── Starting SLAM Processing ──────────────────────────╮
+│ ORB-SLAM3 Real-Time Monitor                                                  │
+│ Container: upstream-v0.2-beta                                                │
+│ Sequence: datasets/EuRoC/vicon_room1/V1_01_easy                              │
+│ Expected frames: 2,912                                                       │
+│ Output files:                                                                │
+│ f_V1_01_easy_upstream-v0.2-beta_20250825_110201_trajectory.txt,              │
+│ kf_V1_01_easy_upstream-v0.2-beta_20250825_110201_trajectory.txt              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]
+ORB-SLAM3: Loading images for sequence 0...LOADED!
+Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]
+ORB-SLAM3: Camera1.k3 optional parameter does not exist...
+Status: Starting... [1s]
+ORB-SLAM3: -Loaded camera 1
+Status: Starting... [1s]
+ORB-SLAM3: -Loaded image info
+Status: Starting... [1s]
+ORB-SLAM3: -Loaded ORB settings
+Status: Starting... [1s]Status: Starting... [1s]
+ORB-SLAM3: -Loaded viewer settings
+Status: Starting... [1s]
+ORB-SLAM3: System.LoadAtlasFromFile optional parameter does not exist...
+Status: Starting... [1s]
+ORB-SLAM3: System.SaveAtlasToFile optional parameter does not exist...
+Status: Starting... [1s]
+ORB-SLAM3: -Loaded Atlas settings
+Status: Starting... [1s]Status: Starting... [1s]
+ORB-SLAM3: -Loaded misc parameters
+Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]
+ORB-SLAM3: -Camera 1 parameters (Pinhole): [ 458.65399169921875 
+457.29598999023438 367.21499633789062 248.375 ]
+Status: Starting... [1s]
+ORB-SLAM3: -Camera 1 distortion parameters: [  -0.28340810537338257 
+0.073959067463874817 0.00019359000725671649 1.7618711353861727e-05 ]
+Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]
+ORB-SLAM3: -Camera 1 parameters after resize: [  365.94735717773438 
+333.44500732421875 292.99069213867188 181.10678100585938 ]
+Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Loading vocabulary (139MB)... [1s]
+ORB-SLAM3: Loading ORB Vocabulary. This could take a while...
+Status: Vocabulary loaded - Initializing system... [16s]
+ORB-SLAM3: Vocabulary loaded!
+Status: Vocabulary loaded - Initializing system... [16s]Status: Vocabulary loaded - Initializing system... [16s]
+ORB-SLAM3: Initialization of Atlas from scratch
+Status: Vocabulary loaded - Initializing system... [16s]
+ORB-SLAM3: Creation of new map with id: 0
+Status: Vocabulary loaded - Initializing system... [16s]
+ORB-SLAM3: Creation of new map with last KF id: 0
+Status: Vocabulary loaded - Initializing system... [16s]Status: Vocabulary loaded - Initializing system... [16s]
+ORB-SLAM3: There are 1 cameras in the atlas
+Status: Processing frames... [16s]
+ORB-SLAM3: Camera 0 is pinhole
+Status: Processing frames... [22s]
+ORB-SLAM3: First KF:0; Map init KF:0
+Status: Map initialized - Processing frames... [22s]
+ORB-SLAM3: New Map created with 418 points
+Status: Map initialized - Processing frames... [171s]
+ORB-SLAM3: Shutdown
+Status: Map initialized - Processing frames... [171s]Status: Saving trajectory... [171s]
+ORB-SLAM3: Saving trajectory to 
+f_V1_01_easy_upstream-v0.2-beta_20250825_110201_trajectory.txt ...
+Status: Saving trajectory... [171s]
+ORB-SLAM3: There are 1 maps in the atlas
+Status: Saving trajectory... [171s]
+ORB-SLAM3: Map 0 has 222 KFs
+Status: Saving trajectory... [171s]Status: Saving keyframe data... [171s]
+ORB-SLAM3: End of saving trajectory to 
+f_V1_01_easy_upstream-v0.2-beta_20250825_110201_trajectory.txt ...
+Status: Saving keyframe data... [171s]Status: Processing complete! [171s]
+ORB-SLAM3: Saving keyframe trajectory to 
+kf_V1_01_easy_upstream-v0.2-beta_20250825_110201_trajectory.txt ...
+
+╭────────────────────────────────── Success ───────────────────────────────────╮
+│ Processing Complete!                                                         │
+│ Successfully processed 2,912 frames                                          │
+│ Results saved to: results/                                                   │
+│ Files: f_V1_01_easy_upstream-v0.2-beta_20250825_110201_trajectory.txt,       │
+│ kf_V1_01_easy_upstream-v0.2-beta_20250825_110201_trajectory.txt              │
+╰──────────────────────────────────────────────────────────────────────────────╯

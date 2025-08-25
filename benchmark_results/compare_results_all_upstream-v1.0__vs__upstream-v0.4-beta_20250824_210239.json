@@ -1,0 +1,235 @@
+{
+  "comparisons": [
+    {
+      "location": "machine_hall",
+      "sequence": "MH_01_easy",
+      "dataset_path": "datasets/EuRoC/machine_hall/MH_01_easy",
+      "timings": [
+        {
+          "version": "upstream-v1.0",
+          "success": true,
+          "runtime_ms": 209344.85054016113,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v1.0_MH_01_easy_20250824_194532.log"
+        },
+        {
+          "version": "upstream-v0.4-beta",
+          "success": true,
+          "runtime_ms": 211306.91957473755,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v0.4-beta_MH_01_easy_20250824_194902.log"
+        }
+      ]
+    },
+    {
+      "location": "machine_hall",
+      "sequence": "MH_02_easy",
+      "dataset_path": "datasets/EuRoC/machine_hall/MH_02_easy",
+      "timings": [
+        {
+          "version": "upstream-v1.0",
+          "success": true,
+          "runtime_ms": 180543.93410682678,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v1.0_MH_02_easy_20250824_195233.log"
+        },
+        {
+          "version": "upstream-v0.4-beta",
+          "success": true,
+          "runtime_ms": 177578.67074012756,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v0.4-beta_MH_02_easy_20250824_195534.log"
+        }
+      ]
+    },
+    {
+      "location": "machine_hall",
+      "sequence": "MH_03_medium",
+      "dataset_path": "datasets/EuRoC/machine_hall/MH_03_medium",
+      "timings": [
+        {
+          "version": "upstream-v1.0",
+          "success": true,
+          "runtime_ms": 161922.05238342285,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v1.0_MH_03_medium_20250824_195831.log"
+        },
+        {
+          "version": "upstream-v0.4-beta",
+          "success": true,
+          "runtime_ms": 160226.98760032654,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v0.4-beta_MH_03_medium_20250824_200113.log"
+        }
+      ]
+    },
+    {
+      "location": "machine_hall",
+      "sequence": "MH_04_difficult",
+      "dataset_path": "datasets/EuRoC/machine_hall/MH_04_difficult",
+      "timings": [
+        {
+          "version": "upstream-v1.0",
+          "success": true,
+          "runtime_ms": 125974.84755516052,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v1.0_MH_04_difficult_20250824_200353.log"
+        },
+        {
+          "version": "upstream-v0.4-beta",
+          "success": true,
+          "runtime_ms": 124896.09837532043,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v0.4-beta_MH_04_difficult_20250824_200559.log"
+        }
+      ]
+    },
+    {
+      "location": "machine_hall",
+      "sequence": "MH_05_difficult",
+      "dataset_path": "datasets/EuRoC/machine_hall/MH_05_difficult",
+      "timings": [
+        {
+          "version": "upstream-v1.0",
+          "success": true,
+          "runtime_ms": 139881.0203075409,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v1.0_MH_05_difficult_20250824_200804.log"
+        },
+        {
+          "version": "upstream-v0.4-beta",
+          "success": true,
+          "runtime_ms": 138335.79993247986,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v0.4-beta_MH_05_difficult_20250824_201024.log"
+        }
+      ]
+    },
+    {
+      "location": "vicon_room1",
+      "sequence": "V1_01_easy",
+      "dataset_path": "datasets/EuRoC/vicon_room1/V1_01_easy",
+      "timings": [
+        {
+          "version": "upstream-v1.0",
+          "success": true,
+          "runtime_ms": 173472.68652915955,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v1.0_V1_01_easy_20250824_201242.log"
+        },
+        {
+          "version": "upstream-v0.4-beta",
+          "success": true,
+          "runtime_ms": 171861.26470565796,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v0.4-beta_V1_01_easy_20250824_201536.log"
+        }
+      ]
+    },
+    {
+      "location": "vicon_room1",
+      "sequence": "V1_02_medium",
+      "dataset_path": "datasets/EuRoC/vicon_room1/V1_02_medium",
+      "timings": [
+        {
+          "version": "upstream-v1.0",
+          "success": true,
+          "runtime_ms": 109829.82754707336,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v1.0_V1_02_medium_20250824_201828.log"
+        },
+        {
+          "version": "upstream-v0.4-beta",
+          "success": true,
+          "runtime_ms": 109476.5374660492,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v0.4-beta_V1_02_medium_20250824_202017.log"
+        }
+      ]
+    },
+    {
+      "location": "vicon_room1",
+      "sequence": "V1_03_difficult",
+      "dataset_path": "datasets/EuRoC/vicon_room1/V1_03_difficult",
+      "timings": [
+        {
+          "version": "upstream-v1.0",
+          "success": true,
+          "runtime_ms": 132255.4395198822,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v1.0_V1_03_difficult_20250824_202207.log"
+        },
+        {
+          "version": "upstream-v0.4-beta",
+          "success": true,
+          "runtime_ms": 132046.4370250702,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v0.4-beta_V1_03_difficult_20250824_202419.log"
+        }
+      ]
+    },
+    {
+      "location": "vicon_room2",
+      "sequence": "V2_01_easy",
+      "dataset_path": "datasets/EuRoC/vicon_room2/V2_01_easy",
+      "timings": [
+        {
+          "version": "upstream-v1.0",
+          "success": true,
+          "runtime_ms": 140996.22917175293,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v1.0_V2_01_easy_20250824_202631.log"
+        },
+        {
+          "version": "upstream-v0.4-beta",
+          "success": true,
+          "runtime_ms": 1714158.3230495453,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v0.4-beta_V2_01_easy_20250824_202852.log"
+        }
+      ]
+    },
+    {
+      "location": "vicon_room2",
+      "sequence": "V2_02_medium",
+      "dataset_path": "datasets/EuRoC/vicon_room2/V2_02_medium",
+      "timings": [
+        {
+          "version": "upstream-v1.0",
+          "success": true,
+          "runtime_ms": 139169.64507102966,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v1.0_V2_02_medium_20250824_205726.log"
+        },
+        {
+          "version": "upstream-v0.4-beta",
+          "success": true,
+          "runtime_ms": 140753.70240211487,
+          "exit_code": 0,
+          "log_path": "benchmark_results/compare_upstream-v0.4-beta_V2_02_medium_20250824_205946.log"
+        }
+      ]
+    },
+    {
+      "location": "vicon_room2",
+      "sequence": "V2_03_difficult",
+      "dataset_path": "datasets/EuRoC/vicon_room2/V2_03_difficult",
+      "timings": [
+        {
+          "version": "upstream-v1.0",
+          "success": false,
+          "runtime_ms": 15597.214221954346,
+          "exit_code": 1,
+          "log_path": "benchmark_results/compare_upstream-v1.0_V2_03_difficult_20250824_210206.log"
+        },
+        {
+          "version": "upstream-v0.4-beta",
+          "success": false,
+          "runtime_ms": 17293.166637420654,
+          "exit_code": 1,
+          "log_path": "benchmark_results/compare_upstream-v0.4-beta_V2_03_difficult_20250824_210222.log"
+        }
+      ]
+    }
+  ]
+}

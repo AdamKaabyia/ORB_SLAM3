@@ -1,0 +1,65 @@
+Warning: Unknown sequence V2_03_difficult, using MH01.txt as fallback
+Auto-detected timestamp file: 
+/opt/orb-slam3/Examples/Monocular/EuRoC_TimeStamps/MH01.txt
+Estimated total frames: 3,682
+╭────────────────────────── Starting SLAM Processing ──────────────────────────╮
+│ ORB-SLAM3 Real-Time Monitor                                                  │
+│ Container: upstream                                                          │
+│ Sequence: datasets/EuRoC/vicon_room2/V2_03_difficult                         │
+│ Expected frames: 3,682                                                       │
+│ Output files: f_V2_03_difficult_upstream_20250825_094122_trajectory.txt,     │
+│ kf_V2_03_difficult_upstream_20250825_094122_trajectory.txt                   │
+╰──────────────────────────────────────────────────────────────────────────────╯
+Status: Starting... [0s]Status: Starting... [0s]Status: Starting... [1s]
+ORB-SLAM3: Loading images for sequence 0...LOADED!
+Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]
+ORB-SLAM3: -Loaded camera 1
+Status: Starting... [1s]
+ORB-SLAM3: -Loaded image info
+Status: Starting... [1s]
+ORB-SLAM3: -Loaded ORB settings
+Status: Starting... [1s]
+ORB-SLAM3: -Loaded viewer settings
+Status: Starting... [1s]
+ORB-SLAM3: -Loaded Atlas settings
+Status: Starting... [1s]
+ORB-SLAM3: -Loaded misc parameters
+Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]
+ORB-SLAM3: -Camera 1 parameters (Pinhole): [ 458.65399169921875 
+457.29598999023438 367.21499633789062 248.375 ]
+Status: Starting... [1s]
+ORB-SLAM3: -Camera 1 distortion parameters: [  -0.28340810537338257 
+0.073959067463874817 0.00019359000725671649 1.7618711353861727e-05 ]
+Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]
+ORB-SLAM3: -Camera 1 parameters after resize: [  365.94735717773438 
+333.44500732421875 292.99069213867188 181.10678100585938 ]
+Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Starting... [1s]Status: Loading vocabulary (139MB)... [1s]
+ORB-SLAM3: Loading ORB Vocabulary. This could take a while...
+Status: Loading vocabulary (139MB)... [1s]
+ORB-SLAM3: Camera1.k3 optional parameter does not exist...
+Status: Loading vocabulary (139MB)... [1s]Status: Loading vocabulary (139MB)... [1s]
+ORB-SLAM3: System.LoadAtlasFromFile optional parameter does not exist...
+Status: Loading vocabulary (139MB)... [1s]
+ORB-SLAM3: System.SaveAtlasToFile optional parameter does not exist...
+Status: Loading vocabulary (139MB)... [1s]Status: Vocabulary loaded - Initializing system... [15s]
+ORB-SLAM3: Vocabulary loaded!
+Status: Vocabulary loaded - Initializing system... [15s]Status: Vocabulary loaded - Initializing system... [15s]
+ORB-SLAM3: Initialization of Atlas from scratch
+Status: Vocabulary loaded - Initializing system... [15s]
+ORB-SLAM3: Creation of new map with id: 0
+Status: Vocabulary loaded - Initializing system... [15s]
+ORB-SLAM3: Creation of new map with last KF id: 0
+Status: Vocabulary loaded - Initializing system... [15s]Status: Vocabulary loaded - Initializing system... [15s]
+ORB-SLAM3: There are 1 cameras in the atlas
+Status: Processing frames... [15s]
+ORB-SLAM3: Camera 0 is pinhole
+Status: Processing frames... [15s]Status: Processing frames... [15s]Status: Processing frames... [15s]
+ORB-SLAM3: Failed to load image at: 
+/workspace/datasets/EuRoC/vicon_room2/V2_03_difficult/mav0/cam0/data/14036365797
+63555584.png
+
+╭────────────────── Error ───────────────────╮
+│ Processing Failed                          │
+│ Exit code: 1                               │
+│ Check results directory for partial output │
+╰────────────────────────────────────────────╯
